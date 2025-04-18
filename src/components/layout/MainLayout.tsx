@@ -1,46 +1,65 @@
-
 import { useState, useEffect } from "react";
 import { Outlet } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { TopNavbar } from "./TopNavbar";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Menu, ArrowLeftToLine, ArrowRightToLine } from "lucide-react";
+import { ArrowLeftToLine, ArrowRightToLine } from "lucide-react";
+import Footer from "@/components/Footer";
+import { useAuth } from "@/contexts/AuthProvider";
 
 export function MainLayout() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
+  const [sidebarOpen, setSidebarOpen] = useState(false); // start with false
+  const { isLogin } = useAuth();
 
   useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth < 768;
       setIsMobile(mobile);
-      if (mobile) setSidebarOpen(false);
+      if (mobile) {
+        setSidebarOpen(false);
+      } else if (isLogin) {
+        setSidebarOpen(true); // open on desktop if logged in
+      }
     };
-    
+
+    handleResize(); // run on load
+
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  }, [isLogin]);
+
+  useEffect(() => {
+    // Open sidebar when user logs in and not on mobile
+    if (isLogin && !isMobile) {
+      setSidebarOpen(true);
+    } else {
+      setSidebarOpen(false);
+    }
+  }, [isLogin, isMobile]);
 
   return (
     <div className="min-h-screen flex flex-col">
-      {isMobile && (
-        <TopNavbar 
-          toggleSidebar={() => setSidebarOpen(!sidebarOpen)} 
-        />
+      {isMobile && isLogin && (
+        <TopNavbar toggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
       )}
+
       <div className="flex flex-1 overflow-hidden">
-        <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        <main 
+        {isLogin && (
+          <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+        )}
+
+        <main
           className={cn(
             "flex-1 transition-all duration-300 overflow-auto",
-            sidebarOpen && !isMobile ? "ml-64" : "ml-0"
+            isLogin && !isMobile && sidebarOpen ? "ml-64" : "ml-0"
           )}
         >
           <div className="p-4 md:p-6">
-            {!isMobile && (
-              <Button 
-                variant="ghost" 
+            {!isMobile && isLogin && (
+              <Button
+                variant="ghost"
                 size="icon"
                 className="mb-4"
                 onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -50,12 +69,11 @@ export function MainLayout() {
                 ) : (
                   <ArrowRightToLine className="h-5 w-5" />
                 )}
-                <span className="sr-only">
-                  {sidebarOpen ? "Close sidebar" : "Open sidebar"}
-                </span>
               </Button>
             )}
+
             <Outlet />
+            <Footer />
           </div>
         </main>
       </div>

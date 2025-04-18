@@ -1,4 +1,3 @@
-
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -14,14 +13,11 @@ import {
   HelpCircle,
   X,
 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthProvider"; // 👈 import auth context
 
-interface SidebarProps {
-  open: boolean;
-  onClose: () => void;
-}
-
-export function Sidebar({ open, onClose }: SidebarProps) {
+export function Sidebar({ open, onClose }) {
   const location = useLocation();
+  const { user } = useAuth(); // 👈 get Firebase user object
 
   const navigation = [
     { name: "Home", href: "/userHome", icon: Home },
@@ -53,6 +49,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             <X className="h-5 w-5" />
           </Button>
         </div>
+
         <div className="flex-1 overflow-y-auto p-4">
           <nav className="space-y-1">
             {navigation.map((item) => (
@@ -72,18 +69,22 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             ))}
           </nav>
         </div>
-        <div className="p-4 border-t flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center">
-              <User className="h-4 w-4 text-primary" />
+
+        {/* Show user info only if logged in */}
+        {user && (
+          <div className="p-4 border-t flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center">
+                <User className="h-4 w-4 text-primary" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-sm font-medium">{user.displayName || "User"}</span>
+                <span className="text-xs text-muted-foreground">{user.email}</span>
+              </div>
             </div>
-            <div className="flex flex-col">
-              <span className="text-sm font-medium">User Name</span>
-              <span className="text-xs text-muted-foreground">user@email.com</span>
-            </div>
+            <ThemeToggle />
           </div>
-          <ThemeToggle />
-        </div>
+        )}
       </div>
     </aside>
   );

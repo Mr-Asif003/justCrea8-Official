@@ -3,6 +3,8 @@ import { useState } from "react";
 import { PageTitle } from "@/components/ui/PageTitle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useNavigate } from "react-router-dom";
+import { getAuth, signOut } from "firebase/auth";
 import {
   Card,
   CardContent,
@@ -51,6 +53,26 @@ export default function Settings() {
     });
   };
   
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    try {
+      const auth = getAuth();
+      await signOut(auth);
+      toast({
+        title: "Signed Out",
+        description: "You have been signed out successfully.",
+      });
+      navigate("/login");
+    } catch (error) {
+      toast({
+        title: "Sign Out Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleExportData = () => {
     toast({
       title: "Data Exported",
@@ -67,10 +89,16 @@ export default function Settings() {
 
   return (
     <div className="animate-fade-in">
+      <div className="flex justify-between">
       <PageTitle 
         title="Settings" 
         description="Customize your workspace and preferences."
       />
+         {/* 🔐 Sign Out Section */}
+           <Button variant="outline" onClick={handleSignOut}>
+                Sign Out
+              </Button>
+      </div>
       
       <div className="space-y-8">
         <Tabs defaultValue="appearance" className="w-full">

@@ -12,6 +12,7 @@ import {
   ArrowUpRightFromCircle,
   Clock,
 } from "lucide-react";
+import { Sidebar } from "@/components/layout/Sidebar";
 
 export default function UserHome() {
   // Get the current hour to determine greeting
