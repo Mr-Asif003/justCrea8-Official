@@ -121,8 +121,14 @@ export default function Home() {
         : "bg-white text-gray-900 shadow-[0_10px_30px_rgba(144,224,239,0.3)]"
         }`}>
         {/* Logo */}
-        <div className={`text-3xl font-extrabold tracking-wide text-pink-600 ${themeMode == 'dark' ? "text-white" : ""} `}>
-          JustCre8
+        <div className="div">
+        <span className={`text-3xl font-extrabold tracking-wide text-pink-600 ${themeMode == 'dark' ? "text-white" : ""} `}>
+          Just
+        </span>
+        <span className={`text-3xl font-extrabold tracking-wide text-cyan-600 `}>
+          Crea8
+        </span>
+
         </div>
 
         <div className="hidden  sm:flex sm:w-[60%] xl:w-[45%] items-center gap-10 px-6 py-2 rounded-xl transition-all duration-500 bg-[#2E2B3F]">
@@ -205,18 +211,18 @@ export default function Home() {
       {/* HERO */}
       <section
         ref={homeRef}
-        className="mt-[4%]  sm:w-[98%]  py-40 px-6 md:px-20 flex flex-col-reverse md:flex-row items-center justify-between overflow-hidden shadow-xs rounded-xl shadow-cyan-300 m-4  bg-black"
+        className="mt-[4%]  sm:w-[98%]  py-40 px-6 md:px-20 flex  flex-row items-center justify-between overflow-hidden shadow-xs rounded-xl shadow-cyan-300 m-4  bg-black"
       >
         {/* Gradient Background Image Overlay */}
         <div className="absolute inset-0 z-0">
           <img
             src={heroImgbg} // Replace with your image path
             alt="Background"
-            className=" w-[90%] sm:w-[98.6%] mt-10   object-cover"
+            className=" w-[98%] m:w-[98.6%] mt-10 object-cover  h-100%"
             style={{
               maskImage: "linear-gradient(to right, transparent 0%, black 100%)",
               WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 100%)",
-              opacity: 0.8,
+              opacity: 0.6,
               filter: "blur(0px)",
             }}
           />
@@ -224,11 +230,11 @@ export default function Home() {
 
 
         {/* Left Side Text */}
-        <div className="w-full md:w-1/2 space-y-6 z-10">
+        <div className=" w-1/2 space-y-6 z-10">
           <Fade cascade>
             <JackInTheBox>
               <div className="flex items-center flex-wrap">
-                <h1 className="sm:text-5xl text-2xl font-bold text-white">Hi </h1>
+                <h1 className="md:text-5xl text-sm font-bold text-white">Hi </h1>
                 <h1 className="text-xl font-bold sm:text-5xl ml-2">👋 </h1>
 
                 {!islock && (
@@ -237,7 +243,7 @@ export default function Home() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Your Name"
-                    className="focus:outline-1 border border-purple-700 rounded text-purple-600 p-2 h-10 ml-2"
+                    className="focus:outline-1 h-7 border border-purple-700 rounded text-purple-600 p-2 sm:h-10 ml-2"
                   />
                 )}
                 <button
@@ -249,11 +255,11 @@ export default function Home() {
               </div>
             </JackInTheBox>
 
-            {name && <h1 className="text-xl text-purple-600">{name}</h1>}
+            {name && <h1 className="sm:text-xl text-purple-600">{name}</h1>}
 
-            <h2 className="text-4xl font-semibold text-pink-500">Welcome to JustCre8</h2>
+            <h2 className="text-4xl font-semibold text-pink-500">Welcome to JustCrea8</h2>
             <p className="text-lg text-gray-200">
-              One app for your entire productivity journey. Plan, track, create, reflect — all in one place.
+               The Ultimate All-in-One Platform for Productivity, Creativity,progress tracker and Project Management
             </p>
 
             <button onClick={() => { setIsGetStarted(!isGetStarted) }} className={`mt-6 px-6 py-3 rounded-xl text-white bg-purple-600 hover:bg-purple-900 shadow-md transition ${isGetStarted ? "hidden" : "block"}`}>

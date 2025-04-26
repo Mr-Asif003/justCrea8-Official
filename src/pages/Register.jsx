@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { NavLink, Link } from 'react-router-dom'; // Corrected import
-import { useNavigate } from 'react-router-dom'; // Corrected import
+import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { auth } from '../Firebase/firebaseConfig.js';
 import heroImgbg from '../assets/images/heroImg4.jpg';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
@@ -12,43 +11,38 @@ export default function Register() {
     password: '',
     confirmPassword: ''
   });
+
   const [showModal, setShowModal] = useState(true);
   const navigate = useNavigate();
 
-  const toggleModal = () => setShowModal(!showModal);
-
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleRegister = async (e) => {
     e.preventDefault();
 
     if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match!');
-      return;
+      return alert('Passwords do not match!');
     }
 
     try {
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        formData.email,
-        formData.password
-      );
+      const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+      await updateProfile(userCredential.user, { displayName: formData.name });
 
-      await updateProfile(userCredential.user, {
-        displayName: formData.name
-      });
-
-      console.log('User registered:', userCredential.user);
       alert("Registration successful!");
-
       toggleModal();
-      navigate('userHome');
+
+      setFormData({ name: '', email: '', password: '', confirmPassword: '' });
+      navigate('/userHome');
     } catch (error) {
-      alert(error.message);
+      console.error("Registration Error:", error.message);
+      alert(`Error: ${error.message}`);
     }
   };
+
+  const toggleModal = () => setShowModal(false);
 
   return (
     <div className="relative z-50">
@@ -69,53 +63,63 @@ export default function Register() {
             />
           </div>
 
-          {/* Register Modal */}
-          <div className="bg-white dark:bg-[#1e1e2f] p-8 rounded-2xl shadow-2xl w-full max-w-md animate-fadeIn border border-gray-200 dark:border-gray-700">
+          {/* Modal */}
+          <div className="bg-white dark:bg-[#1e1e2f] p-8 rounded-2xl shadow-2xl w-full max-w-md border border-gray-200 dark:border-gray-700 animate-fadeIn">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-purple-600 dark:text-purple-400">Create an Account</h2>
-              <Link to='/home' className="text-lg font-semibold text-gray-600 dark:text-white hover:text-red-500 transition">✕</Link>
+              <Link to='/home' className="text-lg font-semibold text-gray-600 dark:text-white hover:text-red-500 transition">
+                ✕
+              </Link>
             </div>
 
-            <form onSubmit={handleRegister} className="space-y-5">
+            <form onSubmit={handleRegister} className="space-y-5" autoComplete='off'>
+              {/* Full Name */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Full Name</label>
                 <input
                   type="text"
                   name="name"
+                  autoComplete='off'
                   value={formData.name}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-[#2b2b3d] dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
                   placeholder="John Doe"
                   required
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-[#2b2b3d] dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
                 />
               </div>
 
+              {/* Email */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
                 <input
                   type="email"
                   name="email"
+                  about='off'
                   value={formData.email}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-[#2b2b3d] dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
                   placeholder="you@example.com"
                   required
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-[#2b2b3d] dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
                 />
               </div>
 
+              {/* Password */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
                 <input
                   type="password"
                   name="password"
+                  autoCapitalize='off'
+                  autoComplete='new-password'
                   value={formData.password}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-[#2b2b3d] dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
                   placeholder="••••••••"
                   required
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-[#2b2b3d] dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
                 />
               </div>
 
+              {/* Confirm Password */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Confirm Password</label>
                 <input
@@ -123,12 +127,13 @@ export default function Register() {
                   name="confirmPassword"
                   value={formData.confirmPassword}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-[#2b2b3d] dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
                   placeholder="••••••••"
                   required
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-[#2b2b3d] dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
                 />
               </div>
 
+              {/* Submit Button */}
               <button
                 type="submit"
                 className="w-full py-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700 transition font-medium"

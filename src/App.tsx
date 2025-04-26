@@ -1,4 +1,3 @@
-// App.jsx
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -14,19 +13,19 @@ const queryClient = new QueryClient();
 const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeHomeProvider>
-        <AuthProvider>
-          <ThemeProvider defaultTheme="system">
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <BrowserRouter>
+      <BrowserRouter>
+        <ThemeHomeProvider>
+          <AuthProvider>
+            <ThemeProvider defaultTheme="system">
+              <TooltipProvider>
+                <Toaster />
+                <Sonner />
                 <AppRoutes />
-              </BrowserRouter>
-            </TooltipProvider>
-          </ThemeProvider>
-        </AuthProvider>
-      </ThemeHomeProvider>
+              </TooltipProvider>
+            </ThemeProvider>
+          </AuthProvider>
+        </ThemeHomeProvider>
+      </BrowserRouter>
     </QueryClientProvider>
   );
 };

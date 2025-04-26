@@ -1,7 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Fade } from "react-awesome-reveal";
 const featuresList = [
+
   { title: "To-Do List + Smart Reminders", desc: "Create, schedule, and get AI-based reminders to stay on track." },
+  { title: "Project Manager", desc: "Create, schedule, and manage project and collaborate with team members" },
   { title: "Goal Planner & Progress Tracker", desc: "Break your goals into steps, track completion with beautiful charts." },
   { title: "Journal & AI Reflection Buddy", desc: "Write your thoughts or talk to an empathetic AI daily companion." },
   { title: "Routine Maker + Habit Streaks", desc: "Build discipline with visual streaks and daily routines." },

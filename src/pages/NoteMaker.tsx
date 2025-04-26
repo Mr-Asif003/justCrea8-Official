@@ -1,9 +1,14 @@
-
-import { useState } from "react";
+ 
+import { useState,useEffect } from "react";
 import { PageTitle } from "@/components/ui/PageTitle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { db, auth } from "@/Firebase/firebaseConfig";
+import { serverTimestamp } from "firebase/firestore";
+
+
+
 import {
   Card,
   CardContent,
@@ -42,9 +47,12 @@ import {
   Save,
   StickyNote,
 } from "lucide-react";
+import {
+  collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, query, where, orderBy
+} from "firebase/firestore";
 
+// Note Types
 type NoteColor = "default" | "red" | "yellow" | "green" | "blue" | "purple";
-
 interface Note {
   id: string;
   title: string;
@@ -52,238 +60,191 @@ interface Note {
   color: NoteColor;
   pinned: boolean;
   archived: boolean;
-  createdAt: Date;
+  createdAt: string;
 }
 
+const colorClasses: Record<NoteColor, string> = {
+  default: "bg-card",
+  red: "bg-red-50 dark:bg-red-900/30",
+  yellow: "bg-yellow-50 dark:bg-yellow-900/30",
+  green: "bg-green-50 dark:bg-green-900/30",
+  blue: "bg-blue-50 dark:bg-blue-900/30",
+  purple: "bg-purple-50 dark:bg-purple-900/30",
+};
+
 export default function NoteMaker() {
-  const [notes, setNotes] = useState<Note[]>([
-    {
-      id: "1",
-      title: "Welcome to NoteMaker",
-      content:
-        "This is your personal note-taking space. Create and organize your thoughts here!",
-      color: "default",
-      pinned: true,
-      archived: false,
-      createdAt: new Date(),
-    },
-    {
-      id: "2",
-      title: "Meeting Notes",
-      content:
-        "- Discuss project timeline\n- Review design mockups\n- Assign tasks to team members",
-      color: "blue",
-      pinned: false,
-      archived: false,
-      createdAt: new Date(Date.now() - 86400000), // 1 day ago
-    },
-    {
-      id: "3",
-      title: "Shopping List",
-      content: "- Eggs\n- Milk\n- Bread\n- Vegetables",
-      color: "green",
-      pinned: false,
-      archived: false,
-      createdAt: new Date(Date.now() - 172800000), // 2 days ago
-    },
-  ]);
-  
+  const [notes, setNotes] = useState<Note[]>([]);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [selectedColor, setSelectedColor] = useState<NoteColor>("default");
-  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
-  const [showArchived, setShowArchived] = useState(false);
+  const [editingNote, setEditingNote] = useState<Note | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [noteToDelete, setNoteToDelete] = useState<string | null>(null);
+  const [showArchived, setShowArchived] = useState(false);
 
-  const colorClasses: Record<NoteColor, string> = {
-    default: "bg-card",
-    red: "bg-red-50 dark:bg-red-900/30",
-    yellow: "bg-yellow-50 dark:bg-yellow-900/30",
-    green: "bg-green-50 dark:bg-green-900/30",
-    blue: "bg-blue-50 dark:bg-blue-900/30",
-    purple: "bg-purple-50 dark:bg-purple-900/30",
-  };
+  const user = auth.currentUser;
+
+  useEffect(() => {
+    if (!user) return;
+    const q = query(
+      collection(db, "notes", user.uid, "userNotes"),
+      orderBy("createdAt", "desc")
+    );
+
+    const unsub = onSnapshot(q, (snapshot) => {
+      const fetchedNotes = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as Note[];
+      setNotes(fetchedNotes);
+    });
+
+    return () => unsub();
+  }, [user]);
 
   const resetForm = () => {
     setTitle("");
     setContent("");
     setSelectedColor("default");
-    setEditingNoteId(null);
+    setEditingNote(null);
   };
 
-  const handleCreateNote = () => {
-    if (!title.trim()) {
+  const handleSaveNote = async () => {
+    if (!user || !title.trim()) {
       toast({
-        title: "Title Required",
-        description: "Please add a title for your note.",
+        title: "Missing Info",
+        description: "Please enter a title.",
         variant: "destructive",
       });
       return;
     }
 
-    const newNote: Note = {
-      id: editingNoteId || Date.now().toString(),
+    const noteData = {
       title,
       content,
       color: selectedColor,
-      pinned: false,
-      archived: false,
-      createdAt: new Date(),
+      pinned: editingNote?.pinned || false,
+      archived: editingNote?.archived || false,
+      createdAt: `${new Date().toLocaleDateString("en-US", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric"
+      })}`
     };
 
-    if (editingNoteId) {
-      // Update existing note
-      setNotes(
-        notes.map((note) => (note.id === editingNoteId ? newNote : note))
-      );
-      toast({
-        title: "Note Updated",
-        description: "Your note has been updated successfully.",
-      });
-    } else {
-      // Create new note
-      setNotes([newNote, ...notes]);
-      toast({
-        title: "Note Created",
-        description: "Your note has been created successfully.",
-      });
+    try {
+      const notesRef = collection(db, "notes", user.uid, "userNotes");
+
+      if (editingNote) {
+        const noteDoc = doc(notesRef, editingNote.id);
+        await updateDoc(noteDoc, noteData);
+        toast({ title: "Note Updated", description: "Your note was updated." });
+      } else {
+        await addDoc(notesRef, noteData);
+        toast({ title: "Note Created", description: "New note added." });
+      }
+
+      resetForm();
+    } catch (err) {
+      console.error(err);
+      toast({ title: "Error", description: "Failed to save note." });
     }
-
-    resetForm();
   };
 
-  const handleEditNote = (note: Note) => {
-    setTitle(note.title);
-    setContent(note.content);
-    setSelectedColor(note.color);
-    setEditingNoteId(note.id);
+  const handleDelete = async (id: string) => {
+    if (!user) return;
+    try {
+      await deleteDoc(doc(db, "notes", user.uid, "userNotes", id));
+      toast({ title: "Deleted", description: "Note deleted." });
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  const handlePinNote = (id: string) => {
-    setNotes(
-      notes.map((note) =>
-        note.id === id ? { ...note, pinned: !note.pinned } : note
-      )
-    );
+  const togglePin = async (note: Note) => {
+    if (!user) return;
+    const ref = doc(db, "notes", user.uid, "userNotes", note.id);
+    await updateDoc(ref, { pinned: !note.pinned });
   };
 
-  const handleArchiveNote = (id: string) => {
-    setNotes(
-      notes.map((note) =>
-        note.id === id ? { ...note, archived: !note.archived } : note
-      )
-    );
-    toast({
-      title: "Note Archived",
-      description: "Your note has been archived.",
-    });
+  const toggleArchive = async (note: Note) => {
+    if (!user) return;
+    const ref = doc(db, "notes", user.uid, "userNotes", note.id);
+    await updateDoc(ref, { archived: !note.archived });
   };
 
-  const handleDeleteNote = (id: string) => {
-    setNotes(notes.filter((note) => note.id !== id));
-    setNoteToDelete(null);
-    toast({
-      title: "Note Deleted",
-      description: "Your note has been deleted.",
-    });
-  };
-
-  const filteredNotes = notes
-    .filter((note) => note.archived === showArchived)
+  const filtered = notes
+    .filter((n) => n.archived === showArchived)
     .filter(
-      (note) =>
-        note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        note.content.toLowerCase().includes(searchTerm.toLowerCase())
+      (n) =>
+        n.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        n.content.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-  const pinnedNotes = filteredNotes.filter((note) => note.pinned);
-  const unpinnedNotes = filteredNotes.filter((note) => !note.pinned);
+  const pinned = filtered.filter((n) => n.pinned);
+  const unpinned = filtered.filter((n) => !n.pinned);
 
   return (
     <div className="animate-fade-in">
-      <div className="flex items-center justify-between mb-6">
-        <PageTitle
-          title="Notes"
-          description="Capture and organize your thoughts quickly."
-          className="mb-0"
-        />
-        <Button onClick={resetForm} disabled={!editingNoteId}>
-          <Plus className="h-4 w-4 mr-2" />
-          New Note
+      <div className="flex justify-between items-center mb-6">
+        <PageTitle title="Notes" description="Your personal note-taking app" />
+        <Button onClick={resetForm} disabled={!editingNote}>
+          <Plus className="h-4 w-4 mr-2" /> New Note
         </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Left column - Create/Edit Note */}
-        <Card className="md:col-span-1 h-fit sticky top-6">
+        {/* Note Form */}
+        <Card className="md:col-span-1 sticky top-6">
           <CardHeader>
-            <CardTitle>
-              {editingNoteId ? "Edit Note" : "Create Note"}
-            </CardTitle>
+            <CardTitle>{editingNote ? "Edit Note" : "Create Note"}</CardTitle>
             <CardDescription>
-              {editingNoteId
-                ? "Update your existing note"
-                : "Jot down your thoughts and ideas"}
+              {editingNote ? "Update your note" : "Add something new"}
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div>
-                <Input
-                  placeholder="Note title..."
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                />
-              </div>
-              <div>
-                <Textarea
-                  placeholder="Write your note here..."
-                  className="min-h-[200px] resize-none"
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                />
-              </div>
-              <div>
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium">Note Color</p>
-                </div>
-                <div className="flex items-center gap-2 mt-2">
-                  {Object.entries(colorClasses).map(([color, className]) => (
-                    <button
-                      key={color}
-                      className={cn(
-                        "w-6 h-6 rounded-full border",
-                        className,
-                        selectedColor === color
-                          ? "ring-2 ring-primary ring-offset-2"
-                          : ""
-                      )}
-                      onClick={() => setSelectedColor(color as NoteColor)}
-                    />
-                  ))}
-                </div>
+          <CardContent className="space-y-4">
+            <Input
+              placeholder="Note title..."
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
+            <Textarea
+              placeholder="Write here..."
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              className="min-h-[200px]"
+            />
+            <div>
+              <p className="text-sm font-medium">Note Color</p>
+              <div className="flex gap-2 mt-2">
+                {Object.entries(colorClasses).map(([color, className]) => (
+                  <button
+                    key={color}
+                    className={cn(
+                      "w-6 h-6 rounded-full border",
+                      className,
+                      selectedColor === color ? "ring-2 ring-primary" : ""
+                    )}
+                    onClick={() => setSelectedColor(color as NoteColor)}
+                  />
+                ))}
               </div>
             </div>
           </CardContent>
           <CardFooter className="justify-end">
-            {editingNoteId && (
-              <Button
-                variant="outline"
-                className="mr-2"
-                onClick={resetForm}
-              >
+            {editingNote && (
+              <Button variant="outline" className="mr-2" onClick={resetForm}>
                 Cancel
               </Button>
             )}
-            <Button onClick={handleCreateNote}>
+            <Button onClick={handleSaveNote}>
               <Save className="h-4 w-4 mr-2" />
-              {editingNoteId ? "Update Note" : "Save Note"}
+              {editingNote ? "Update" : "Save"}
             </Button>
           </CardFooter>
         </Card>
 
-        {/* Right column - Note List */}
+        {/* Notes Display */}
         <div className="md:col-span-2 space-y-6">
           <div className="flex items-center gap-4">
             <div className="relative flex-1">
@@ -303,173 +264,54 @@ export default function NoteMaker() {
             </Button>
           </div>
 
-          {filteredNotes.length > 0 ? (
-            <div className="space-y-6">
-              {pinnedNotes.length > 0 && (
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center">
-                    <Pin className="h-4 w-4 mr-2" /> PINNED
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {pinnedNotes.map((note) => (
-                      <NoteCard
-                        key={note.id}
-                        note={note}
-                        onEdit={handleEditNote}
-                        onPin={handlePinNote}
-                        onArchive={handleArchiveNote}
-                        onDelete={(id) => setNoteToDelete(id)}
-                      />
-                    ))}
-                  </div>
-                </div>
+          {filtered.length > 0 ? (
+            <>
+              {pinned.length > 0 && (
+                <NoteSection title="Pinned" notes={pinned} onEdit={setEditingNote} onPin={togglePin} onArchive={toggleArchive} onDelete={handleDelete} />
               )}
-
-              {unpinnedNotes.length > 0 && (
-                <div>
-                  {pinnedNotes.length > 0 && (
-                    <h3 className="text-sm font-medium text-muted-foreground mb-3">
-                      OTHERS
-                    </h3>
-                  )}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {unpinnedNotes.map((note) => (
-                      <NoteCard
-                        key={note.id}
-                        note={note}
-                        onEdit={handleEditNote}
-                        onPin={handlePinNote}
-                        onArchive={handleArchiveNote}
-                        onDelete={(id) => setNoteToDelete(id)}
-                      />
-                    ))}
-                  </div>
-                </div>
+              {unpinned.length > 0 && (
+                <NoteSection title={pinned.length > 0 ? "Others" : ""} notes={unpinned} onEdit={setEditingNote} onPin={togglePin} onArchive={toggleArchive} onDelete={handleDelete} />
               )}
-            </div>
+            </>
           ) : (
             <div className="text-center py-12">
               <StickyNote className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-xl font-medium mb-2">No Notes Found</h3>
-              <p className="text-muted-foreground mb-4">
-                {showArchived
-                  ? "You don't have any archived notes."
-                  : searchTerm
-                  ? "No notes match your search."
-                  : "Create your first note to get started!"}
-              </p>
-              {!showArchived && !searchTerm && (
-                <Button onClick={() => setTitle("My First Note")}>
-                  Create First Note
-                </Button>
-              )}
+              <h3 className="text-xl font-medium mb-2">No Notes</h3>
+              <p className="text-muted-foreground">Try adding or searching for a note.</p>
             </div>
           )}
         </div>
       </div>
-
-      {/* Delete Confirmation Dialog */}
-      <Dialog
-        open={noteToDelete !== null}
-        onOpenChange={(open) => {
-          if (!open) setNoteToDelete(null);
-        }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete Note</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete this note? This action cannot
-              be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setNoteToDelete(null)}>
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={() => noteToDelete && handleDeleteNote(noteToDelete)}
-            >
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
 
-interface NoteCardProps {
-  note: Note;
-  onEdit: (note: Note) => void;
-  onPin: (id: string) => void;
-  onArchive: (id: string) => void;
-  onDelete: (id: string) => void;
-}
-
-function NoteCard({ note, onEdit, onPin, onArchive, onDelete }: NoteCardProps) {
-  const colorClasses: Record<NoteColor, string> = {
-    default: "bg-card",
-    red: "bg-red-50 dark:bg-red-900/30",
-    yellow: "bg-yellow-50 dark:bg-yellow-900/30",
-    green: "bg-green-50 dark:bg-green-900/30",
-    blue: "bg-blue-50 dark:bg-blue-900/30",
-    purple: "bg-purple-50 dark:bg-purple-900/30",
-  };
-
+// Helper Component
+function NoteSection({ title, notes, onEdit, onPin, onArchive, onDelete }) {
   return (
-    <Card className={cn("transition-all", colorClasses[note.color])}>
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between">
-          <div className="flex-1 min-w-0">
-            <h3 className="font-medium truncate mb-1">{note.title}</h3>
-            <div className="text-sm text-muted-foreground">
-              {new Date(note.createdAt).toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-              })}
-            </div>
-            <div className="mt-2 whitespace-pre-line text-sm line-clamp-6">
-              {note.content}
-            </div>
-          </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => onEdit(note)}>
-                <Edit className="h-4 w-4 mr-2" />
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onPin(note.id)}>
-                <Pin className="h-4 w-4 mr-2" />
-                {note.pinned ? "Unpin" : "Pin"}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onArchive(note.id)}>
-                <Archive className="h-4 w-4 mr-2" />
-                {note.archived ? "Unarchive" : "Archive"}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => onDelete(note.id)}
-                className="text-destructive focus:bg-destructive/10 focus:text-destructive"
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </CardContent>
-      {note.pinned && (
-        <div className="absolute -top-1 -right-1">
-          <Pin className="h-4 w-4 text-primary fill-primary" />
-        </div>
-      )}
-    </Card>
+    <div>
+      {title && <h3 className="text-sm font-semibold text-muted-foreground mb-2">{title}</h3>}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        {notes.map((note) => (
+          <Card key={note.id} className={`${cn(colorClasses[note.color])} `} >
+            <CardHeader>
+              <div className="flex justify-between items-start">
+                <div>
+                  <CardTitle>{note.title}</CardTitle>
+                  <p className="text-sm">{note.createdAt}</p>
+                  <CardDescription className="whitespace-pre-wrap">{note.content}</CardDescription>
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="ghost" size="icon" onClick={() => onEdit(note)}><Edit className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" onClick={() => onPin(note)}><Pin className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" onClick={() => onArchive(note)}><Archive className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" onClick={() => onDelete(note.id)}><Trash2 className="h-4 w-4" /></Button>
+                </div>
+              </div>
+            </CardHeader>
+          </Card>
+        ))}
+      </div>
+    </div>
   );
 }

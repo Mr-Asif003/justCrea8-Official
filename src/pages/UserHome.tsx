@@ -13,6 +13,9 @@ import {
   Clock,
 } from "lucide-react";
 import { Sidebar } from "@/components/layout/Sidebar";
+import { useEffect, useState } from "react";
+import { db,auth } from "@/Firebase/firebaseConfig";
+import { doc, getDoc } from "firebase/firestore";
 
 export default function UserHome() {
   // Get the current hour to determine greeting
@@ -20,6 +23,33 @@ export default function UserHome() {
   let greeting = "Good evening";
   if (hour < 12) greeting = "Good morning";
   else if (hour < 18) greeting = "Good afternoon";
+
+  //database reference
+  const user = auth.currentUser;
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState(""); 
+  const [userEmail, setUserEmail] = useState("");
+  const [bio, setBio] = useState("");
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (!user) return;
+
+      const userRef = doc(db, "users", user.uid);
+      const docSnap = await getDoc(userRef);
+
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setFirstName(data.firstName || "");
+        setLastName(data.lastName || "");
+        setUserEmail(data.email || "");
+        setBio(data.bio || "");
+      } else {
+        console.log("No user document found.");
+      }
+    };
+
+    fetchUserData();
+  }, [user]);
 
   const motivationalQuotes = [
     "The best way to predict the future is to create it.",
@@ -34,7 +64,7 @@ export default function UserHome() {
   return (
     <div className="animate-fade-in">
       <PageTitle 
-        title={`${greeting}, User!`} 
+        title={`${greeting}, ${firstName} ${lastName}`} 
         description="Here's an overview of your creative workspace."
       />
 

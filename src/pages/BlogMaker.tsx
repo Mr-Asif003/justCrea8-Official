@@ -1,10 +1,12 @@
 
-import { useState } from "react";
+import { useState, useRef,useEffect } from "react";
 import { PageTitle } from "@/components/ui/PageTitle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { collection,addDoc, doc, updateDoc, deleteDoc, onSnapshot, query, where, orderBy, Timestamp
+ } from "firebase/firestore"; 
 import {
   Card,
   CardContent,
@@ -51,31 +53,47 @@ import {
   X,
   Tag,
 } from "lucide-react";
+import { auth, db } from "@/Firebase/firebaseConfig";
+import { set } from "date-fns";
 
 export default function BlogMaker() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [currentTag, setCurrentTag] = useState("");
-  const [blogs, setBlogs] = useState([
-    {
-      id: "1",
-      title: "Getting Started with JustCre8",
-      content: "This is a sample blog post about using JustCre8 effectively...",
-      tags: ["Productivity", "Tutorial"],
-      status: "published",
-      date: "2023-04-10",
-    },
-    {
-      id: "2",
-      title: "10 Tips for Better Organization",
-      content: "Staying organized is key to productivity...",
-      tags: ["Organization", "Tips"],
-      status: "draft",
-      date: "2023-04-05",
-    },
-  ]);
+  const [isBold, setIsBold] = useState(false);
+  const [isItalic, setIsItalic] = useState(false);
+  const [isUnderline, setIsUnderline] = useState(false);
+  const [align, setAlign] = useState<"left" | "center" | "right">("left");
+  const [creater, setCreater] = useState("");
+  const editorRef = useRef(null);
+  const [blogs, setBlogs] = useState([]);
+  const [showBlog, setShowBlog] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const[showContentHtml,setContentHtml]=useState<string>("")
+  const [showBlogId, setShowBlogId] = useState<string | null>(null);
+  // Fetch blogs on mount
+  useEffect(() => {
+    const user = auth.currentUser;
+    if (user) {
+      const blogsRef = collection(db, "blogs", user.uid, "userblogs");
+      const q = query(blogsRef, orderBy("date", "desc"));
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const fetchedBlogs = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setBlogs(fetchedBlogs);
+      });
+      return () => unsubscribe();
+    }
+  }, []);
+
+  // Format text for the editor
+  const formatText = (command: string) => {
+    document.execCommand(command, false, null);
+    editorRef.current.focus();
+  };
 
   const handleAddTag = () => {
     if (currentTag && !tags.includes(currentTag)) {
@@ -88,7 +106,7 @@ export default function BlogMaker() {
     setTags(tags.filter((t) => t !== tag));
   };
 
-  const handleSaveBlog = (status: "draft" | "published") => {
+  const handleSaveBlog = async (status: "draft" | "published") => {
     if (!title.trim()) {
       toast({
         title: "Missing Title",
@@ -99,36 +117,64 @@ export default function BlogMaker() {
     }
 
     const newBlog = {
-      id: Date.now().toString(),
       title,
       content,
       tags,
-      status,
-      date: new Date().toISOString().split("T")[0],
+      status: status === "published" ? "published" : "draft",
+      date: Timestamp.now(),
+      createdBy: creater,
     };
 
-    setBlogs([newBlog, ...blogs]);
-    toast({
-      title: status === "published" ? "Blog Published" : "Draft Saved",
-      description:
-        status === "published"
-          ? "Your blog post has been published successfully."
-          : "Your draft has been saved.",
-    });
+    try {
+      const user = auth.currentUser;
+      const blogRef = collection(db, "blogs", user.uid, "userblogs");
+      await addDoc(blogRef, newBlog);
 
-    // Reset form
-    setTitle("");
-    setContent("");
-    setTags([]);
+      toast({
+        title: status === "published" ? "Blog Published" : "Draft Saved",
+        description: `Your blog post has been ${status}.`,
+      });
+
+      setBlogs([newBlog, ...blogs]);
+      setContent("");
+      setCreater("");
+      setTags([]);
+      setTitle("");
+    } catch (e) {
+      toast({
+        title: "Error",
+        description: `An error occurred while saving your blog post: ${e.message}`,
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleDelete = (id: string) => {
-    setBlogs(blogs.filter((blog) => blog.id !== id));
-    setDeleteId(null);
-    toast({
-      title: "Blog Deleted",
-      description: "The blog post has been deleted.",
-    });
+  const handleDelete = async (id:string) => {
+    const user = auth.currentUser;
+    if (!user) {
+      toast({
+        title: "Authentication Error",
+        description: "You are not logged in.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const blogRef = doc(db, "blogs", user.uid, "userblogs", id);
+      await deleteDoc(blogRef);
+      setBlogs(blogs.filter((blog) => blog.id !== id));
+      toast({
+        title: "Blog Deleted",
+        description: "The blog post has been deleted.",
+      });
+    } catch (e) {
+      toast({
+        title: "Error",
+        description: `Error deleting the blog post: ${e.message}`,
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -156,63 +202,111 @@ export default function BlogMaker() {
               <div className="space-y-4">
                 <div>
                   <Input
+                    placeholder="Blog Creater Name"
+                    value={creater}
+                    onChange={(e) => setCreater(e.target.value)}
+                    className="text-lg font-medium"
+                  />
+                </div>
+                <div>
+                  <Input
                     placeholder="Enter blog title..."
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     className="text-lg font-medium"
                   />
                 </div>
+                
 
-                <div>
-                  <div className="bg-muted/50 rounded-md p-1 mb-2 flex flex-wrap gap-1">
-                    <Button variant="ghost" size="sm" className="h-8 px-2">
-                      <Bold className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="sm" className="h-8 px-2">
-                      <Italic className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="sm" className="h-8 px-2">
-                      <Underline className="h-4 w-4" />
-                    </Button>
-                    <Separator
-                      orientation="vertical"
-                      className="mx-1 h-8"
-                    />
-                    <Button variant="ghost" size="sm" className="h-8 px-2">
-                      <List className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="sm" className="h-8 px-2">
-                      <ListOrdered className="h-4 w-4" />
-                    </Button>
-                    <Separator
-                      orientation="vertical"
-                      className="mx-1 h-8"
-                    />
-                    <Button variant="ghost" size="sm" className="h-8 px-2">
-                      <AlignLeft className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="sm" className="h-8 px-2">
-                      <AlignCenter className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="sm" className="h-8 px-2">
-                      <AlignRight className="h-4 w-4" />
-                    </Button>
-                    <Separator
-                      orientation="vertical"
-                      className="mx-1 h-8"
-                    />
-                    <Button variant="ghost" size="sm" className="h-8 px-2">
-                      <ImageIcon className="h-4 w-4" />
-                    </Button>
-                  </div>
+                
+    <div>
+      <div className="bg-muted/50 rounded-md p-1 mb-2 flex flex-wrap gap-1">
+        <Button
+          onClick={() => {
+            formatText("bold");
+            setIsBold(!isBold);
+          }}
+          variant="ghost"
+          size="sm"
+          className={`h-8 px-2 ${isBold ? "bg-cyan-400" : ""}`}
+        >
+          <Bold className="h-4 w-4" />
+        </Button>
 
-                  <Textarea
-                    placeholder="Write your blog content here..."
-                    value={content}
-                    onChange={(e) => setContent(e.target.value)}
-                    className="min-h-[300px] resize-none"
-                  />
-                </div>
+        <Button
+          onClick={() => {
+            formatText("italic");
+            setIsItalic(!isItalic);
+          }}
+          variant="ghost"
+          size="sm"
+          className={`h-8 px-2 ${isItalic ? "bg-cyan-400" : ""}`}
+        >
+          <Italic className="h-4 w-4" />
+        </Button>
+
+        <Button
+          onClick={() => {
+            formatText("underline");
+            setIsUnderline(!isUnderline);
+          }}
+          variant="ghost"
+          size="sm"
+          className={`h-8 px-2 ${isUnderline ? "bg-cyan-400" : ""}`}
+        >
+          <Underline className="h-4 w-4" />
+        </Button>
+
+        <Separator orientation="vertical" className="mx-1 h-8" />
+
+        <Button
+          onClick={() => {
+            formatText("justifyLeft");
+            setAlign("left");
+          }}
+          variant="ghost"
+          size="sm"
+          className={`h-8 px-2 ${align === "left" ? "bg-cyan-400" : ""}`}
+        >
+          <AlignLeft className="h-4 w-4" />
+        </Button>
+
+        <Button
+          onClick={() => {
+            formatText("justifyCenter");
+            setAlign("center");
+          }}
+          variant="ghost"
+          size="sm"
+          className={`h-8 px-2 ${align === "center" ? "bg-cyan-400" : ""}`}
+        >
+          <AlignCenter className="h-4 w-4" />
+        </Button>
+
+        <Button
+          onClick={() => {
+            formatText("justifyRight");
+            setAlign("right");
+          }}
+          variant="ghost"
+          size="sm"
+          className={`h-8 px-2 ${align === "right" ? "bg-cyan-400" : ""}`}
+        >
+          <AlignRight className="h-4 w-4" />
+        </Button>
+      </div>
+
+      <div
+      ref={editorRef}
+      contentEditable
+      onInput={()=>{setContent(editorRef.current.innerText)
+      setContentHtml(editorRef.current.innerHTML)
+      }}
+      className="min-h-[300px] p-4 border rounded-md focus-visible:ring-2 focus:outline-none"
+      placeholder="Write your blog content here..."
+      suppressContentEditableWarning={true}
+    />
+    </div>
 
                 <div>
                   <p className="text-sm font-medium mb-2">Tags</p>
@@ -296,9 +390,9 @@ export default function BlogMaker() {
             </div>
           </div>
 
-          {blogs.length > 0 ? (
+          {blogs.filter(blog=>blog.status==='published').length > 0 ? (
             <div className="space-y-4">
-              {blogs.map((blog) => (
+              {blogs.filter(blog=>blog.status==='published').map((blog) => (
                 <Card key={blog.id}>
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between">
@@ -307,6 +401,7 @@ export default function BlogMaker() {
                           <h3 className="font-semibold text-lg">
                             {blog.title}
                           </h3>
+                                   
                           <Badge
                             variant={
                               blog.status === "published"
@@ -318,10 +413,14 @@ export default function BlogMaker() {
                             {blog.status}
                           </Badge>
                         </div>
+                        <p className="text-cyan-300 text-sm">
+                           by  {blog.createdBy}
+                            
+                          </p>
                         <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
                           <Clock className="h-4 w-4" />
                           <span>
-                            {new Date(blog.date).toLocaleDateString()}
+                          {blogs.find(blog => blog.id === showBlogId)?.date.toDate().toLocaleDateString()}
                           </span>
                         </div>
                         <p className="text-muted-foreground line-clamp-2 mb-3">
@@ -341,9 +440,47 @@ export default function BlogMaker() {
                         </div>
                       </div>
                       <div className="flex flex-col gap-2 ml-4">
-                        <Button variant="ghost" size="icon">
+                      <Button
+        onClick={() => {
+          setShowBlogId(blog.id);
+          setShowBlog(true);
+        }}>
                           <Eye className="h-4 w-4" />
                         </Button>
+                        {showBlog && (
+  <Dialog open={showBlog} onOpenChange={setShowBlog}>
+    <DialogContent className="max-w-2xl">
+      <DialogHeader>
+        <DialogTitle>
+          {blogs.find(blog => blog.id === showBlogId)?.title}
+        </DialogTitle>
+        <DialogDescription>
+          By: {blogs.find(blog => blog.id === showBlogId)?.createdBy}
+         
+        </DialogDescription>
+        <DialogDescription>
+          By: {blogs.find(blog => blog.id === showBlogId)?.date.toDate().toLocaleDateString()}
+         
+        </DialogDescription>
+        <DialogDescription className="text-xl p-4">
+
+           {blogs.find(blog => blog.id === showBlogId)?.content}
+        </DialogDescription>
+      </DialogHeader>
+      <div
+        className="prose max-w-none"
+        dangerouslySetInnerHTML={{
+          __html: blogs.find(blog => blog.id === showBlogId)?.contentHtml || "",
+        }}
+      />
+      <DialogFooter>
+        <Button onClick={() => setShowBlog(false)}>Close</Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
+)}
+
+                       
                         <Button variant="ghost" size="icon">
                           <FileEdit className="h-4 w-4" />
                         </Button>
@@ -358,7 +495,7 @@ export default function BlogMaker() {
                               variant="ghost"
                               size="icon"
                               className="text-destructive hover:text-destructive"
-                              onClick={() => setDeleteId(blog.id)}
+                              onClick={()=>{handleDelete(blog.id)}}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -407,4 +544,5 @@ export default function BlogMaker() {
       </Tabs>
     </div>
   );
+
 }

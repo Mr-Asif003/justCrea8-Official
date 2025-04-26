@@ -3,6 +3,10 @@ import { useState, useEffect } from "react";
 import { PageTitle } from "@/components/ui/PageTitle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { auth } from "@/Firebase/firebaseConfig";
+import { db } from "@/Firebase/firebaseConfig";
+import { getDoc, setDoc, collection, onSnapshot, addDoc, deleteDoc ,doc,  query, orderBy} from "firebase/firestore";
+
 import {
   Card,
   CardContent,
@@ -50,6 +54,7 @@ import {
   Tag,
   AlertCircle,
 } from "lucide-react";
+import { todo } from "node:test";
 
 interface Todo {
   id: string;
@@ -57,45 +62,19 @@ interface Todo {
   completed: boolean;
   priority: "low" | "medium" | "high";
   category: string;
-  dueDate: string | null;
+  startDate:string | null;
+  startTime:string | null;
+  endDate:string | null;
+  endTime:string | null;
+  startTimeMeridian:string;
+  endTimeMeridian:string;
 }
 
 export default function TodoMaker() {
-  const [todos, setTodos] = useState<Todo[]>([
-    {
-      id: "1",
-      title: "Complete project proposal",
-      completed: false,
-      priority: "high",
-      category: "Work",
-      dueDate: new Date().toISOString().split("T")[0],
-    },
-    {
-      id: "2",
-      title: "Buy groceries",
-      completed: false,
-      priority: "medium",
-      category: "Personal",
-      dueDate: new Date(Date.now() + 86400000).toISOString().split("T")[0], // Tomorrow
-    },
-    {
-      id: "3",
-      title: "Schedule doctor appointment",
-      completed: false,
-      priority: "high",
-      category: "Health",
-      dueDate: new Date(Date.now() + 172800000).toISOString().split("T")[0], // Day after tomorrow
-    },
-    {
-      id: "4",
-      title: "Finish reading book",
-      completed: true,
-      priority: "low",
-      category: "Personal",
-      dueDate: null,
-    },
-  ]);
+  const [todos, setTodos] = useState([
   
+  ]);
+
   const [newTodo, setNewTodo] = useState("");
   const [selectedPriority, setSelectedPriority] = useState<"low" | "medium" | "high">("medium");
   const [selectedCategory, setSelectedCategory] = useState("Personal");
@@ -107,6 +86,16 @@ export default function TodoMaker() {
   ]);
   const [newCategoryDialog, setNewCategoryDialog] = useState(false);
   const [newCategory, setNewCategory] = useState("");
+  const [timerForm, setTimerForm] = useState(false);
+  const [taskStartDate, setTaskStartDate] = useState("");
+  const [taskStartTime, setTaskStartTime] = useState('');
+  const [taskEndTime, setTaskEndTime] = useState('');
+  const [taskEndDate,setTaskEndDate]=useState('')
+  const [taskEndTimeMeridian, setTaskEndTimeMeridian] = useState('');
+  const [taskStartTimeMeridian, setTaskStartTimeMeridian] = useState('');
+
+
+
 
   const priorityStyles = {
     low: { badge: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400", icon: "text-green-500" },
@@ -114,8 +103,29 @@ export default function TodoMaker() {
     high: { badge: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400", icon: "text-red-500" },
   };
 
-  const addTodo = () => {
+  useEffect(() => {
+    const user = auth.currentUser;
+    if (!user) return;
+  
+    const todosRef = collection(db, 'todos', user.uid, 'userTodos');
+    const q = query(todosRef, orderBy('startDate', 'desc')); // Optional: order by startDate descending
+  
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const todosData = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setTodos(todosData);
+    });
+  
+    return () => unsubscribe(); // Clean up the listener on unmount
+  }, []);
+
+
+  const addTodo = async () => {
+    const user=auth.currentUser
     if (!newTodo.trim()) {
+
       toast({
         title: "Task Required",
         description: "Please enter a task description.",
@@ -123,22 +133,34 @@ export default function TodoMaker() {
       });
       return;
     }
+    const todoId = Date.now().toString();
 
-    const todo: Todo = {
-      id: Date.now().toString(),
+    const todo = {
+      id: todoId,
       title: newTodo,
       completed: false,
       priority: selectedPriority,
       category: selectedCategory,
-      dueDate: selectedDueDate || null,
-    };
+      startDate:taskStartDate,
+      endDate:taskEndDate,
+      startTime:taskStartTime,
+      endTime:taskEndTime,
+      startTimeMeridian:taskStartTimeMeridian,
+      endTimeMeridian:taskEndTimeMeridian
 
-    setTodos([todo, ...todos]);
-    setNewTodo("");
-    toast({
-      title: "Task Added",
-      description: "Your task has been added successfully.",
-    });
+    };
+    try {
+      const todoRef = doc(db, 'todos', user.uid, 'userTodos', todoId);
+      await setDoc(todoRef, todo); // 👈 setDoc with custom ID
+      setTodos([todo, ...todos]);
+      setNewTodo("");
+      toast({
+        title: "Task Added",
+        description: "Your task has been added successfully.",
+      });
+    } catch (e) {
+      alert(e.message);
+    }
   };
 
   const toggleComplete = (id: string) => {
@@ -159,14 +181,40 @@ export default function TodoMaker() {
     );
   };
 
-  const deleteTodo = (id: string) => {
-    setTodos(todos.filter((todo) => todo.id !== id));
-    setTodoToDelete(null);
-    toast({
-      title: "Task Deleted",
-      description: "Your task has been deleted.",
-    });
+  const deleteTodo = async (id: string) => {
+    const user = auth.currentUser;
+    if (!user) {
+      toast({
+        title: "Not Logged In",
+        description: "Please log in to delete tasks.",
+        variant: "destructive",
+      });
+      return;
+    }
+  
+    try {
+      const todoRef = doc(db, 'todos', user.uid, 'userTodos', id);
+      await deleteDoc(todoRef);
+  
+      setTodos(prevTodos => prevTodos.filter(todo => todo.id !== id));
+      setTodoToDelete(null);
+  
+      toast({
+        title: "Task Deleted",
+        description: "The task was deleted successfully.",
+      });
+    } catch (error: any) {
+      console.error("Error deleting task:", error.message);
+  
+      toast({
+        title: "Deletion Failed",
+        description: "An error occurred while deleting the task. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
+  
+  
 
   const addCategory = () => {
     if (newCategory && !categories.includes(newCategory)) {
@@ -188,17 +236,17 @@ export default function TodoMaker() {
   };
 
   let filteredTodos = todos;
-  
-  switch(activeTab) {
+
+  switch (activeTab) {
     case "today":
       const today = new Date().toISOString().split("T")[0];
-      filteredTodos = todos.filter(todo => todo.dueDate === today);
+      filteredTodos = todos.filter(todo => todo.endDate === today);
       break;
     case "upcoming":
       const todayTimestamp = new Date().setHours(0, 0, 0, 0);
       filteredTodos = todos.filter(todo => {
-        if (!todo.dueDate) return false;
-        const dueDate = new Date(todo.dueDate).setHours(0, 0, 0, 0);
+        if (!todo.endDate) return false;
+        const dueDate = new Date(todo.endDate).setHours(0, 0, 0, 0);
         return dueDate > todayTimestamp && !todo.completed;
       });
       break;
@@ -210,7 +258,7 @@ export default function TodoMaker() {
       // All todos, already set
       break;
   }
-  
+
   // Group by category
   const todosByCategory: Record<string, Todo[]> = {};
   filteredTodos.forEach(todo => {
@@ -226,7 +274,7 @@ export default function TodoMaker() {
         title="Todo List"
         description="Organize your tasks and stay productive."
       />
-      
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Create New Todo */}
         <Card className="lg:col-span-1">
@@ -310,22 +358,86 @@ export default function TodoMaker() {
                   </Select>
                 </div>
               </div>
-              <div>
-                <p className="text-sm font-medium mb-1.5">Due Date (Optional)</p>
-                <Input
-                  type="date"
-                  value={selectedDueDate}
-                  onChange={(e) => setSelectedDueDate(e.target.value)}
-                  min={new Date().toISOString().split("T")[0]}
-                />
-              </div>
+
+              <Button onClick={() => setTimerForm(true)} className={`p-2 bg-tranparent outline-1 outline-dotted ${timerForm ? "hidden" : ""}`}>
+                <Check className="h-4 w-4 mr-1" /> Add
+                <Clock/>
+              </Button>
+              {timerForm && (
+
+                <div>
+
+                  <label className="text-sm font-medium mb-3">Start Date</label>
+                  <Input
+                    type='date'
+                    placeholder="enter start date"
+                    value={taskStartDate}
+                    onChange={(e) => setTaskStartDate(e.target.value)} 
+                    className="mb-3 mt-2"
+                    />
+
+                    <label className="text-sm font-medium mb-1.5">Start Time</label>
+                  <div className="flex items-center mb-3 mt-2 ">
+                   
+                    <Input
+                      type='time'
+                      placeholder="enter start time"
+                      value={taskStartTime}
+                      className="w-2/3"
+                      onChange={(e) => setTaskStartTime(e.target.value)}
+
+                    />
+                    
+                    <select className="ml-4 h-10 bg-transparent" value={taskStartTimeMeridian} onChange={(e)=>{setTaskStartTimeMeridian(e.target.value)}} >
+                      <option>am</option>
+                      <option>pm</option>
+                    </select>
+                  </div>
+
+
+                  <div className="mb-3 mt-2">
+                    <p className="text-sm font-medium mb-1.5">Due Date (Optional)</p>
+                    <Input
+                      type="date"
+                      value={taskEndDate}
+                      onChange={(e) => setTaskEndDate(e.target.value)}
+                      min={new Date().toISOString().split("T")[0]}
+                    />
+                  </div>
+                  <label className="text-sm font-medium mb-1.5">End Time</label>
+                  <div className="flex items-center mb-3 mt-2 ">
+                   
+                    <Input
+                      type='time'
+                      placeholder="enter start time"
+                      value={taskEndTime}
+                      className="w-2/3"
+                      onChange={(e) => setTaskEndTime(e.target.value)}
+
+                    />
+                    
+                    <select className="ml-4 h-10 bg-transparent  " value={taskEndTimeMeridian} onChange={(e)=>setTaskEndTimeMeridian(e.target.value)} >
+                      <option>am</option>
+                      <option>pm</option>
+                    </select>
+                  </div>
+
+
+                  <Button onClick={()=>setTimerForm(!timerForm)}>
+                    close <Clock/>
+                  </Button>
+                </div>
+
+
+              )}
+
               <Button onClick={addTodo} className="w-full">
                 <Plus className="h-4 w-4 mr-2" /> Add Task
               </Button>
             </div>
           </CardContent>
         </Card>
-        
+
         {/* Todo List */}
         <Card className="lg:col-span-2">
           <CardHeader className="pb-3">
@@ -396,11 +508,11 @@ export default function TodoMaker() {
                                 <Flag className={cn("h-3 w-3 mr-1", priorityStyles[todo.priority].icon)} />
                                 {todo.priority}
                               </Badge>
-                              
-                              {todo.dueDate && (
+
+                              {todo.endDate && (
                                 <Badge variant="outline" className="px-1 py-0 text-xs font-normal">
                                   <Calendar className="h-3 w-3 mr-1" />
-                                  {new Date(todo.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                  {new Date(todo.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                                 </Badge>
                               )}
                             </div>
@@ -427,10 +539,10 @@ export default function TodoMaker() {
                   {activeTab === "today"
                     ? "You don't have any tasks due today."
                     : activeTab === "upcoming"
-                    ? "You don't have any upcoming tasks."
-                    : activeTab === "completed"
-                    ? "You haven't completed any tasks yet."
-                    : "Add your first task to get started!"}
+                      ? "You don't have any upcoming tasks."
+                      : activeTab === "completed"
+                        ? "You haven't completed any tasks yet."
+                        : "Add your first task to get started!"}
                 </p>
                 {activeTab === "all" && (
                   <Button onClick={() => document.querySelector('input')?.focus()}>
