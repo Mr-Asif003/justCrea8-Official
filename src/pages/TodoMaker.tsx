@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { auth } from "@/Firebase/firebaseConfig";
 import { db } from "@/Firebase/firebaseConfig";
-import { getDoc, setDoc, collection, onSnapshot, addDoc, deleteDoc ,doc,  query, orderBy} from "firebase/firestore";
+import { getDoc, setDoc, collection, onSnapshot,updateDoc, addDoc, deleteDoc, doc, query, orderBy } from "firebase/firestore";
 
 import {
   Card,
@@ -62,17 +62,17 @@ interface Todo {
   completed: boolean;
   priority: "low" | "medium" | "high";
   category: string;
-  startDate:string | null;
-  startTime:string | null;
-  endDate:string | null;
-  endTime:string | null;
-  startTimeMeridian:string;
-  endTimeMeridian:string;
+  startDate: string | null;
+  startTime: string | null;
+  endDate: string | null;
+  endTime: string | null;
+  startTimeMeridian: string;
+  endTimeMeridian: string;
 }
 
 export default function TodoMaker() {
   const [todos, setTodos] = useState([
-  
+
   ]);
 
   const [newTodo, setNewTodo] = useState("");
@@ -90,10 +90,13 @@ export default function TodoMaker() {
   const [taskStartDate, setTaskStartDate] = useState("");
   const [taskStartTime, setTaskStartTime] = useState('');
   const [taskEndTime, setTaskEndTime] = useState('');
-  const [taskEndDate,setTaskEndDate]=useState('')
+  const [taskEndDate, setTaskEndDate] = useState('')
   const [taskEndTimeMeridian, setTaskEndTimeMeridian] = useState('');
   const [taskStartTimeMeridian, setTaskStartTimeMeridian] = useState('');
-
+  
+    const now = new Date();
+    const currentHour = now.getHours();
+    
 
 
 
@@ -106,10 +109,10 @@ export default function TodoMaker() {
   useEffect(() => {
     const user = auth.currentUser;
     if (!user) return;
-  
+
     const todosRef = collection(db, 'todos', user.uid, 'userTodos');
     const q = query(todosRef, orderBy('startDate', 'desc')); // Optional: order by startDate descending
-  
+
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const todosData = snapshot.docs.map((doc) => ({
         id: doc.id,
@@ -117,13 +120,13 @@ export default function TodoMaker() {
       }));
       setTodos(todosData);
     });
-  
+
     return () => unsubscribe(); // Clean up the listener on unmount
   }, []);
 
 
   const addTodo = async () => {
-    const user=auth.currentUser
+    const user = auth.currentUser
     if (!newTodo.trim()) {
 
       toast({
@@ -134,25 +137,26 @@ export default function TodoMaker() {
       return;
     }
     const todoId = Date.now().toString();
-
+    const date=new Date();
     const todo = {
       id: todoId,
       title: newTodo,
       completed: false,
       priority: selectedPriority,
       category: selectedCategory,
-      startDate:taskStartDate,
-      endDate:taskEndDate,
-      startTime:taskStartTime,
-      endTime:taskEndTime,
-      startTimeMeridian:taskStartTimeMeridian,
-      endTimeMeridian:taskEndTimeMeridian
-
+      startDate: taskStartDate,
+      endDate: taskEndDate,
+      startTime: taskStartTime,
+      endTime: taskEndTime,
+      createdMonth:date.getMonth(),
+      createdDate:date.getDate(),
+    
     };
     try {
       const todoRef = doc(db, 'todos', user.uid, 'userTodos', todoId);
       await setDoc(todoRef, todo); // 👈 setDoc with custom ID
       setTodos([todo, ...todos]);
+      console.log(todos)
       setNewTodo("");
       toast({
         title: "Task Added",
@@ -164,16 +168,40 @@ export default function TodoMaker() {
   };
 
   const toggleComplete = (id: string) => {
+    const user = auth.currentUser;
+    if (!user) {
+      toast({
+        title: "Not Authorized",
+        description: "Please log in to update tasks.",
+        variant: "destructive",
+      });
+      return;
+    }
+  
     setTodos(
       todos.map((todo) => {
         if (todo.id === id) {
           const updatedTodo = { ...todo, completed: !todo.completed };
+          
           if (updatedTodo.completed) {
             toast({
               title: "Task Completed",
               description: "Great job! Task marked as complete.",
             });
           }
+  
+          // Update Firestore
+          const todoRef = doc(db, "todos", user.uid, "userTodos", id); // Reference the specific todo for the user
+          updateDoc(todoRef, {
+            completed: updatedTodo.completed,
+          })
+          .then(() => {
+            console.log("Todo updated in Firestore!");
+          })
+          .catch((error) => {
+            console.error("Error updating todo in Firestore: ", error);
+          });
+  
           return updatedTodo;
         }
         return todo;
@@ -191,21 +219,21 @@ export default function TodoMaker() {
       });
       return;
     }
-  
+
     try {
       const todoRef = doc(db, 'todos', user.uid, 'userTodos', id);
       await deleteDoc(todoRef);
-  
+
       setTodos(prevTodos => prevTodos.filter(todo => todo.id !== id));
       setTodoToDelete(null);
-  
+
       toast({
         title: "Task Deleted",
         description: "The task was deleted successfully.",
       });
     } catch (error: any) {
       console.error("Error deleting task:", error.message);
-  
+
       toast({
         title: "Deletion Failed",
         description: "An error occurred while deleting the task. Please try again.",
@@ -213,8 +241,8 @@ export default function TodoMaker() {
       });
     }
   };
-  
-  
+
+
 
   const addCategory = () => {
     if (newCategory && !categories.includes(newCategory)) {
@@ -361,7 +389,7 @@ export default function TodoMaker() {
 
               <Button onClick={() => setTimerForm(true)} className={`p-2 bg-tranparent outline-1 outline-dotted ${timerForm ? "hidden" : ""}`}>
                 <Check className="h-4 w-4 mr-1" /> Add
-                <Clock/>
+                <Clock />
               </Button>
               {timerForm && (
 
@@ -372,13 +400,13 @@ export default function TodoMaker() {
                     type='date'
                     placeholder="enter start date"
                     value={taskStartDate}
-                    onChange={(e) => setTaskStartDate(e.target.value)} 
+                    onChange={(e) => setTaskStartDate(e.target.value)}
                     className="mb-3 mt-2"
-                    />
+                  />
 
-                    <label className="text-sm font-medium mb-1.5">Start Time</label>
+                  <label className="text-sm font-medium mb-1.5">Start Time</label>
                   <div className="flex items-center mb-3 mt-2 ">
-                   
+
                     <Input
                       type='time'
                       placeholder="enter start time"
@@ -387,8 +415,8 @@ export default function TodoMaker() {
                       onChange={(e) => setTaskStartTime(e.target.value)}
 
                     />
-                    
-                    <select className="ml-4 h-10 bg-transparent" value={taskStartTimeMeridian} onChange={(e)=>{setTaskStartTimeMeridian(e.target.value)}} >
+
+                    <select className="ml-4 h-10 bg-transparent" value={taskStartTimeMeridian} onChange={(e) => { setTaskStartTimeMeridian(e.target.value) }} >
                       <option>am</option>
                       <option>pm</option>
                     </select>
@@ -406,7 +434,7 @@ export default function TodoMaker() {
                   </div>
                   <label className="text-sm font-medium mb-1.5">End Time</label>
                   <div className="flex items-center mb-3 mt-2 ">
-                   
+
                     <Input
                       type='time'
                       placeholder="enter start time"
@@ -415,16 +443,16 @@ export default function TodoMaker() {
                       onChange={(e) => setTaskEndTime(e.target.value)}
 
                     />
-                    
-                    <select className="ml-4 h-10 bg-transparent  " value={taskEndTimeMeridian} onChange={(e)=>setTaskEndTimeMeridian(e.target.value)} >
+
+                    <select className="ml-4 h-10 bg-transparent  " value={taskEndTimeMeridian} onChange={(e) => setTaskEndTimeMeridian(e.target.value)} >
                       <option>am</option>
                       <option>pm</option>
                     </select>
                   </div>
 
 
-                  <Button onClick={()=>setTimerForm(!timerForm)}>
-                    close <Clock/>
+                  <Button onClick={() => setTimerForm(!timerForm)}>
+                    close <Clock />
                   </Button>
                 </div>
 
@@ -508,15 +536,46 @@ export default function TodoMaker() {
                                 <Flag className={cn("h-3 w-3 mr-1", priorityStyles[todo.priority].icon)} />
                                 {todo.priority}
                               </Badge>
+                              {todo.startDate && (
+                                <Badge variant="outline" className="px-1 py-0 text-xs font-normal">
+                                  <Calendar className="h-3 w-3 mr-1" />
+                                  Start :
+                                  {new Date(todo.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                </Badge>
+                              )}
 
                               {todo.endDate && (
                                 <Badge variant="outline" className="px-1 py-0 text-xs font-normal">
                                   <Calendar className="h-3 w-3 mr-1" />
+                                  End:
                                   {new Date(todo.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                                 </Badge>
                               )}
+
                             </div>
                           </div>
+                          
+                          {todo.startDate == todo.endDate ? <>
+                           <h2>
+                           {parseInt(todo.endTime)-currentHour>0?
+                           <>
+                           <p>{todo.endTime}</p>
+                           <p className="text-green-600 text-sm"> {parseInt(todo.endTime)-currentHour} hour left</p>
+                           </>: <>
+                           <p>{todo.endTime}</p>
+                           <p className="text-red-600 text-sm">Delay {currentHour-parseInt(todo.endTime)} hour</p>
+                           </>}
+                            </h2>
+                            
+                          </> : <>
+                          {parseInt(todo.endDate.slice(8,10))-now.getDate()<0?<>
+                            <p className="text-red-600 text-sm">{parseInt(todo.endDate.slice(8,10))-now.getDate()} day delay</p>
+                          
+                          </>:<>
+                          
+                           <p className="text-green-400 text-sm">{parseInt(todo.endDate.slice(8,10))-now.getDate()} day left</p>
+                          </>}
+                          </>}
                           <Button
                             variant="ghost"
                             size="icon"
@@ -525,6 +584,7 @@ export default function TodoMaker() {
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
+
                         </div>
                       ))}
                     </div>

@@ -22,7 +22,9 @@ export default function Register() {
 
   const handleRegister = async (e) => {
     e.preventDefault();
-
+    if(form.password=='' || formData.name==' '|| formData.confirmPassword==''){
+      return ;
+    }
     if (formData.password !== formData.confirmPassword) {
       return alert('Passwords do not match!');
     }
@@ -35,7 +37,7 @@ export default function Register() {
       toggleModal();
 
       setFormData({ name: '', email: '', password: '', confirmPassword: '' });
-      navigate('/userHome');
+      
     } catch (error) {
       console.error("Registration Error:", error.message);
       alert(`Error: ${error.message}`);

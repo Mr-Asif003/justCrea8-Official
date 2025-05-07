@@ -2,7 +2,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { auth } from "@/Firebase/firebaseConfig"; // Import Firebase config
 import { onAuthStateChanged, signOut } from "firebase/auth";
-
+import Cookies from 'js-cookie'
 // Create Auth Context
 const AuthContext = createContext();
 
@@ -10,11 +10,26 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [isLogin, setIsLogin] = useState(false); // Default to false, since user is not logged in initially
   const [user, setUser] = useState(null); // Store current user object
+ 
+  const setSession=()=>{
+    const sessionDuration=60*60*2*1000
+
+    setTimeout(async () => {
+      await signOut(auth);
+      alert("Session expired. Please log in again.");
+      
+      window.location.href = "/login"; // redirect to login
+    }, sessionDuration);
+  }
+
+
+
 
   // Set up listener for changes in authentication state
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
+        setSession()
         setIsLogin(true); // User is logged in
         setUser(currentUser); // Store user info
       } else {

@@ -271,7 +271,7 @@ export default function Home() {
           {isGetStarted && (
             <div className='flex '>
               <button onClick={() => { setIsLoginBtnClick(!isLoginBtnClick) }} className="mt-6 px-6 py-2 rounded-xl text-white bg-purple-600 hover:bg-purple-900 shadow-md transition">Login</button>
-              <NavLink to='/register'
+              <NavLink to='/Register'
         
                className="mt-6 px-6 py-2 rounded-xl text-white border-2 ml-4 border-purple-500 hover:bg-purple-900 shadow-md transition">Register</NavLink>
             </div>

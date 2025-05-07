@@ -18,7 +18,8 @@ import NoteMaker from "./pages/NoteMaker";
 import NotFound from "./pages/NotFound"; // Catch-all route
 import Help from "./pages/Help";
 import ProtectedRoute from "./components/auth/ProtectedRoute"; // Custom protected route logic
-
+import ProjectHome from "./pages/projectPages/projectHome";
+import ProjectLayout from "./components/layout/ProjectLayout";
 const AppRoutes = () => {
   const { isLogin } = useAuth(); // Get login state from AuthProvider
 
@@ -50,6 +51,17 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
+      <Route element={<ProjectLayout />}>
+              
+         <Route
+          path="/project"
+          element={
+            <ProtectedRoute isLoggedIn={isLogin}>
+              <ProjectHome />
+            </ProtectedRoute>
+          }
+        />
+              </Route>
           <Route
           path="/notes"
           element={

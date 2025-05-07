@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PageTitle } from "@/components/ui/PageTitle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,6 +38,9 @@ import {
   Trash2,
   Calendar,
 } from "lucide-react";
+import { collection, getDocs, addDoc, onSnapshot, deleteDoc ,doc} from "firebase/firestore";
+import { auth, db } from "@/Firebase/firebaseConfig";
+import { Input } from "@/components/ui/input";
 
 export default function Dashboard() {
   const [editMode, setEditMode] = useState(false);
@@ -47,6 +50,55 @@ export default function Dashboard() {
     todos: true,
     activity: true,
   });
+  const [blogData, setBlogData] = useState([])
+  const [noteData, setNoteData] = useState([])
+  const [todoData, setTodoData] = useState([])
+  const [todoCompletedNum, setTodoCompletedNum] = useState(0);
+  const [showActivityform, setShowActivityForm] = useState(false)
+  const [title, setTitle] = useState('')
+  const [time, setTime] = useState('')
+  const [activityDay, setActivityDay] = useState('')
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const user = auth.currentUser;
+      if (!user) return; // handle if user is not logged in
+
+      const blogRef = collection(db, "blogs", user.uid, "userblogs");
+      const querySnapshot = await getDocs(blogRef);
+      const blogs = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+
+      const todosRef = collection(db, 'todos', user.uid, 'userTodos');
+      const w = await getDocs(todosRef)
+      const todos = w.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }))
+
+      const notesRef = collection(db, "notes", user.uid, "userNotes");
+      const no = await getDocs(notesRef)
+      const notes = no.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }))
+
+
+      setBlogData(blogs);
+      setNoteData(notes);
+      setTodoData(todos);
+
+
+    };
+
+    fetchData();
+  }, []);
+
+
+
+
 
   const toggleWidgetVisibility = (widget: keyof typeof visibleWidgets) => {
     setVisibleWidgets((prev) => ({
@@ -55,30 +107,230 @@ export default function Dashboard() {
     }));
   };
 
-  // Sample data for charts
-  const blogData = [
-    { name: "Jan", value: 5 },
-    { name: "Feb", value: 8 },
-    { name: "Mar", value: 15 },
-    { name: "Apr", value: 12 },
-    { name: "May", value: 18 },
-    { name: "Jun", value: 23 },
+  const months = [
+    { name: 'Jan', index: 0 },
+    { name: 'Feb', index: 1 },
+    { name: 'Mar', index: 2 },
+    { name: 'Apr', index: 3 },
+    { name: 'May', index: 4 },
+    { name: 'Jun', index: 5 },
+    { name: 'Jul', index: 6 },
+    { name: 'Aug', index: 7 },
+    { name: 'Sep', index: 8 },
+    { name: 'Oct', index: 9 },
+    { name: 'Nov', index: 10 },
+    { name: 'Dec', index: 11 }
   ];
 
-  const noteData = [
-    { name: "Personal", value: 15 },
-    { name: "Work", value: 22 },
-    { name: "Ideas", value: 8 },
-    { name: "Other", value: 5 },
-  ];
 
-  const todoData = [
-    { name: "Today", completed: 5, pending: 3 },
-    { name: "Tomorrow", completed: 2, pending: 8 },
-    { name: "This Week", completed: 10, pending: 12 },
-  ];
+  const [bData, setBData] = useState([]);
+  const [nData, setNData] = useState([]);
+  const [tData, setTData] = useState([]);
 
-  const CHART_COLORS = ["#7e5bef", "#6c4dd1", "#00c6ff", "#94e2ff"];
+  useEffect(() => {
+    const date = new Date();
+    const currentMonth = date.getMonth();
+
+    // Initialize bData, nData, and tData with 0 values for each month
+    let updatedBData = months.map((month) => ({
+      name: month.name,
+      value: 0
+    }));
+    let updatedNData = months.map((month) => ({
+      name: month.name,
+      value: 0
+    }));
+    let updatedTData = months.map((month) => ({
+      name: month.name,
+      value: 0
+    }));
+
+    // Count blogs, notes, and todos for each month
+    blogData.forEach((e) => {
+      const monthIndex = parseInt(e.createdMonth);
+      if (monthIndex >= 0 && monthIndex <= 11) {
+        updatedBData[monthIndex].value++;
+      }
+    });
+
+    noteData.forEach((e) => {
+      const monthIndex = parseInt(e.createdMonth);
+      if (monthIndex >= 0 && monthIndex <= 11) {
+        updatedNData[monthIndex].value++;
+      }
+    });
+
+    let tc = []
+    tc = todoData.filter((e) => e.completed === true);
+    setTodoCompletedNum(tc.length);
+    todoData.forEach((e) => {
+      const monthIndex = parseInt(e.createdMonth);
+      if (monthIndex >= 0 && monthIndex <= 11) {
+        updatedTData[monthIndex].value++;
+      }
+    });
+    const currentMonthName = months[currentMonth].name
+    const currentDate = date.getDate();
+
+    let todayTodos = []
+    todayTodos = todoData.filter((e) => parseInt(e.endDate.slice(8, 10)) == currentDate && e.createdMonth == currentMonth);
+    let todayComplete = []
+    todayComplete = todayTodos.filter((e) => e.completed == true);
+    
+
+
+
+    const todoStats = [{ name: 'today', completed: todayComplete.length, pending: todayTodos.length - todayComplete.length }
+      , { name: currentMonthName, completed: tc.length, pending: todoData.length - tc.length }
+    ]
+
+    // Set the updated data to trigger a re-render
+    setBData(updatedBData);
+    setNData(updatedNData);
+    setTData(todoStats);
+
+    // // Example: To check the count for each data type in the current month
+    // console.log('Blog count for current month:', updatedBData[currentMonth].value);
+    // console.log('Note count for current month:', updatedNData[currentMonth].value);
+    // console.log('Todo count for current month:', updatedTData[currentMonth].value);
+
+  }, [blogData, noteData, todoData]);// Re-run when any of the data changes
+
+  const thisMonthNote = noteData.filter((n) => {
+    if (!n.createdAt) return false;
+    const month = new Date(n.createdAt).getMonth(); // 0 = Jan, 3 = April
+    return month === 3; // April is month index 3
+  });
+  
+  
+
+
+
+  //Sample data for charts
+  // let bData = [
+  //   { name: '0', value: 5 },
+  //   { name: '1', value: 8 },
+  //   { name: '2', value: 15 },
+  //   { name: '4', value: 12 },
+  //   { name: '5', value: 18 },
+  //   { name: '6', value: 23 },
+  // ];
+
+  // const nData = [
+  //   { name: "Personal", value: 15 },
+  //   { name: "Work", value: 22 },
+  //   { name: "Ideas", value: 8 },
+  //   { name: "Other", value: 5 },
+  // ];
+
+  // const tData = [
+  //   { name: "Today", completed: 5, pending: 3 },
+  //   { name: "Tomorrow", completed: 2, pending: 8 },
+  //   { name: "This Week", completed: 10, pending: 12 },
+  // ];
+
+  const CHART_COLORS = ["#7e5bef", "#6c4dd1", "#00c6ff", "#94e2ff",'#ff0000','#00ff00','#0000ff'];
+  const [addActivityList, setAddActivityList] = useState([]);
+  const [tommorrowaddActivityList, settommorrowAddActivityList] = useState([]);
+  const addActivity = async () => {
+    const user = auth.currentUser;
+    if (!user) {
+      alert("Please log in first.");
+      return;
+    }
+
+    const date = new Date(); // Get the current timestamp
+
+    const newActivity = {
+      title: title,
+      time: time,
+      activityDay: activityDay,
+      createdAt: date, // Storing full date instead of just day of the month
+    };
+
+    try {
+      const activityRef = collection(db, 'activities', user.uid, 'userActivities');
+      const docRef = await addDoc(activityRef, newActivity);
+
+      setAddActivityList(prev => [
+        {
+          id: docRef.id,
+          ...newActivity,
+        },
+        ...prev,
+      ]);
+    
+
+    } catch (e: any) {
+      alert(e.message);
+    }
+  };
+
+
+
+  const user = auth.currentUser;
+  useEffect(() => {
+    const fetchActivities = async () => {
+      
+
+      try {
+        const activitiesRef = collection(db, "activities", user.uid, "userActivities");
+
+        // Real-time listener (snapshot listener)
+        const unsubscribe = onSnapshot(activitiesRef, (querySnapshot) => {
+          const activities = querySnapshot.docs.map(doc => {
+            const data = doc.data();
+            // Firestore's Timestamp conversion (if necessary)
+            const formattedDate = data.createdAt ? new Date(data.createdAt.seconds * 1000) : null;
+
+            return {
+              id: doc.id,
+              ...data,
+              createdAt: formattedDate,
+            };
+          });
+
+          // Overwrite the activities list (instead of appending to avoid duplicates)
+          setAddActivityList(activities);
+
+          const td=addActivityList.filter((e)=>e.activityDay!='Today')
+          settommorrowAddActivityList(td)
+         
+        });
+
+        // Cleanup listener on unmount
+        return () => unsubscribe();
+      } catch (e) {
+        
+      }
+    };
+
+    fetchActivities(); // Call the function on mount
+  }, []); // Empty dependency array to fetch once on mount
+
+  const deleteActivity = async (id) => {
+    const user = auth.currentUser;
+    if (!user) {
+      alert("Please log in first.");
+      return;
+    }
+  
+    const activityDocRef = doc(db, "activities", user.uid, "userActivities", id);
+    try {
+      await deleteDoc(activityDocRef);
+  
+      // Optionally update local state:
+      setAddActivityList(prev => prev.filter(activity => activity.id !== id));
+      
+    } catch (e) {
+      alert("Failed to delete activity: " + e.message);
+    }
+    
+  };
+    
+  
+
+
 
   return (
     <div className="animate-fade-in">
@@ -195,7 +447,7 @@ export default function Dashboard() {
             <CardContent>
               <div className="mb-6">
                 <div className="flex items-center justify-between mb-2">
-                  <div className="text-2xl font-bold">23</div>
+                  <div className="text-2xl font-bold">{blogData.length}</div>
                   <Badge variant="outline" className="text-primary">
                     4 new this month
                   </Badge>
@@ -208,7 +460,7 @@ export default function Dashboard() {
               <div className="h-[180px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart
-                    data={blogData}
+                    data={bData}
                     margin={{ top: 0, right: 0, left: 0, bottom: 0 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
@@ -219,11 +471,12 @@ export default function Dashboard() {
                       axisLine={false}
                     />
                     <YAxis
+                      dataKey="value"
                       fontSize={12}
                       tickLine={false}
                       axisLine={false}
-                      tickFormatter={(value) => `${value}`}
                     />
+
                     <Tooltip />
                     <Area
                       type="monotone"
@@ -280,9 +533,9 @@ export default function Dashboard() {
             <CardContent>
               <div className="mb-6">
                 <div className="flex items-center justify-between mb-2">
-                  <div className="text-2xl font-bold">50</div>
+                  <div className="text-2xl font-bold">{noteData.length}</div>
                   <Badge variant="outline" className="text-primary">
-                    12 new this month
+                     {thisMonthNote.length} new this month
                   </Badge>
                 </div>
                 <p className="text-sm text-muted-foreground">
@@ -290,22 +543,22 @@ export default function Dashboard() {
                 </p>
               </div>
 
-              <div className="h-[180px]">
+              <div className="h-[480px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
-                      data={noteData}
+                      data={nData}
                       cx="50%"
                       cy="50%"
                       innerRadius={40}
                       outerRadius={80}
                       dataKey="value"
                       label={({ name, percent }) =>
-                        `${name}: ${(percent * 100).toFixed(0)}%`
+                        `    ${(percent * 100).toFixed(0)}  %`
                       }
                       labelLine={false}
                     >
-                      {noteData.map((entry, index) => (
+                      {nData.map((entry, index) => (
                         <Cell
                           key={`cell-${index}`}
                           fill={CHART_COLORS[index % CHART_COLORS.length]}
@@ -346,21 +599,21 @@ export default function Dashboard() {
             <CardContent>
               <div className="mb-6">
                 <div className="flex items-center justify-between mb-2">
-                  <div className="text-2xl font-bold">28/40</div>
+                  <div className="text-2xl font-bold">{todoCompletedNum}/{todoData.length}</div>
                   <Badge variant="outline" className="text-primary">
-                    70% completed
+                    {todoCompletedNum / todoData.length * 100} % completed
                   </Badge>
                 </div>
                 <p className="text-sm text-muted-foreground">
                   Task completion rate
                 </p>
-                <Progress className="mt-2" value={70} />
+                <Progress className="mt-2" value={todoCompletedNum / todoData.length * 100} />
               </div>
 
               <div className="h-[180px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
-                    data={todoData}
+                    data={tData}
                     margin={{ top: 5, right: 5, left: 0, bottom: 5 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
@@ -376,10 +629,12 @@ export default function Dashboard() {
                     />
                     <Bar
                       dataKey="pending"
-                      fill="#fab005"
-                      name="Pending"
+                      fill="red"
+                      name="pending"
                       radius={[4, 4, 0, 0]}
                     />
+
+
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -415,53 +670,98 @@ export default function Dashboard() {
               </TabsList>
 
               <TabsContent value="reminders" className="space-y-4">
-                <div className="border rounded-lg p-4 flex items-center justify-between">
-                  <div className="flex items-start gap-4">
-                    <div className="bg-primary/10 text-primary rounded-full p-2">
-                      <Calendar className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <h4 className="font-medium">Team meeting</h4>
-                      <p className="text-sm text-muted-foreground">
-                        Today at 2:00 PM
-                      </p>
-                    </div>
-                  </div>
-                  <Button size="sm" variant="ghost">
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
 
-                <div className="border rounded-lg p-4 flex items-center justify-between">
-                  <div className="flex items-start gap-4">
-                    <div className="bg-primary/10 text-primary rounded-full p-2">
-                      <FileEdit className="h-5 w-5" />
+                {addActivityList.map((e) => (
+                  <div
+                    key={e.id}
+                    className="border rounded-lg p-4 flex items-center justify-between"
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="bg-primary/10 text-primary rounded-full p-2">
+                        <Calendar className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <h4 className="font-medium">{e.title}</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {e.activityDay} at {e.time}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="font-medium">Finish blog draft</h4>
-                      <p className="text-sm text-muted-foreground">
-                        Tomorrow at 12:00 PM
+                    <div className="flex flex-col justify-center items-center">
+                      <Button size="sm" onClick={()=>deleteActivity(e.id)} variant="ghost">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                      {/* Format the createdAt timestamp */}
+                      <p className="text-xs">
+                        Creation Date: {e.createdAt ? new Date(e.createdAt.seconds * 1000).toLocaleString() : "No Date"}
                       </p>
                     </div>
                   </div>
-                  <Button size="sm" variant="ghost">
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
+                ))}
+
+
+
 
                 <div className="flex justify-center mt-4">
-                  <Button variant="outline" size="sm" className="gap-1">
+                  <Button variant="outline" onClick={() => setShowActivityForm(!showActivityform)} size="sm" className="gap-1">
                     <Plus className="h-4 w-4" /> Add New Reminder
                   </Button>
                 </div>
               </TabsContent>
+              {showActivityform && (
+                <div className="flex flex-col justify-around">
+                  <p className="mt-4">please enter your activity</p>
+                  <div className="mt-4"></div>
+                  <Input onChange={(e) => setTitle(e.target.value)} placeholder="enter activity" className="mb-3" />
+                  <Input onChange={(e) => setTime(e.target.value)} placeholder="enter time" />
+                  <select
+                    className="bg-transparent text-purple-600 mt-4 focus:outline-1 focus:outline-purple-700"
+                    value={activityDay}
+                    onChange={(e) => setActivityDay(e.target.value)} // 👈 updating only activityDay
+                  >
+                    <option value="" disabled>Select Day</option>
+                    <option value="Today">Today</option>
+                    <option value="Tomorrow">Tomorrow</option>
+                    <option value="Day after tomorrow">Day after tomorrow</option>
+                  </select>
+                  <Button className="mt-4" onClick={addActivity}>Done</Button>
+                </div>
+              )}
 
               <TabsContent value="upcoming">
                 <div className="text-center py-8 text-muted-foreground">
-                  <p>No upcoming events</p>
+                  {/* <p>No upcoming events</p>
                   <Button variant="outline" size="sm" className="mt-2 gap-1">
                     <Plus className="h-4 w-4" /> Add Event
-                  </Button>
+                  </Button> */}
+                  {tommorrowaddActivityList.map((e) => (
+                    <div
+                      key={e.id}
+                      className="border mt-4 rounded-lg p-4 flex items-center justify-between"
+                    >
+                      <div className="flex items-start gap-4">
+                        <div className="bg-primary/10 text-primary rounded-full p-2">
+                          <Calendar className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <h4 className="font-medium">{e.title}</h4>
+                          <p className="text-sm text-muted-foreground">
+                            {e.activityDay} at {e.time}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex flex-col justify-center items-center">
+                        <Button size="sm" variant="ghost">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                        {/* Format the createdAt timestamp */}
+                        <p className="text-xs">
+                          Creation Date: {e.createdAt ? new Date(e.createdAt.seconds * 1000).toLocaleString() : "No Date"}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+
                 </div>
               </TabsContent>
 
@@ -476,7 +776,7 @@ export default function Dashboard() {
                       <div className="text-xs text-muted-foreground">Today at 10:34 AM</div>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center gap-4">
                     <div className="bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400 p-2 rounded-full">
                       <StickyNote className="h-4 w-4" />
@@ -486,7 +786,7 @@ export default function Dashboard() {
                       <div className="text-xs text-muted-foreground">Yesterday at 4:12 PM</div>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center gap-4">
                     <div className="bg-pink-100 text-pink-600 dark:bg-pink-900/30 dark:text-pink-400 p-2 rounded-full">
                       <FileEdit className="h-4 w-4" />

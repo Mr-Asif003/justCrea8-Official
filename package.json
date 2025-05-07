@@ -11,7 +11,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
     "@hookform/resolvers": "^3.9.0",
+    "@mui/joy": "^5.0.0-beta.52",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-alert-dialog": "^1.1.1",
     "@radix-ui/react-aspect-ratio": "^1.1.0",
@@ -48,6 +51,7 @@
     "firebase": "^11.6.0",
     "framer-motion": "^12.7.2",
     "input-otp": "^1.2.4",
+    "js-cookie": "^3.0.5",
     "keen-slider": "^6.8.6",
     "lucide-react": "^0.462.0",
     "next-themes": "^0.3.0",
@@ -63,6 +67,7 @@
     "react-router-dom": "^6.26.2",
     "react-scroll": "^1.9.3",
     "react-transition-group": "^4.4.5",
+    "react-typewriter-effect": "^1.1.0",
     "recharts": "^2.12.7",
     "sonner": "^1.5.0",
     "tailwind-merge": "^2.5.2",

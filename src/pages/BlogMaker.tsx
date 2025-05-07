@@ -107,6 +107,7 @@ export default function BlogMaker() {
   };
 
   const handleSaveBlog = async (status: "draft" | "published") => {
+    const date=new Date()
     if (!title.trim()) {
       toast({
         title: "Missing Title",
@@ -122,6 +123,8 @@ export default function BlogMaker() {
       tags,
       status: status === "published" ? "published" : "draft",
       date: Timestamp.now(),
+      createdAt:date.getDate(),
+      createdMonth:date.getMonth(),
       createdBy: creater,
     };
 

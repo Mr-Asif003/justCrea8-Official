@@ -65,11 +65,11 @@ interface Note {
 
 const colorClasses: Record<NoteColor, string> = {
   default: "bg-card",
-  red: "bg-red-50 dark:bg-red-900/30",
-  yellow: "bg-yellow-50 dark:bg-yellow-900/30",
-  green: "bg-green-50 dark:bg-green-900/30",
-  blue: "bg-blue-50 dark:bg-blue-900/30",
-  purple: "bg-purple-50 dark:bg-purple-900/30",
+  red: "bg-red-600 dark:bg-red-600",
+  yellow: "bg-yellow-400 dark:bg-yellow-600",
+  green: "bg-green-500 dark:bg-green-600",
+  blue: "bg-blue-500 dark:bg-blue-600",
+  purple: "bg-purple-500 dark:bg-purple-600",
 };
 
 export default function NoteMaker() {
@@ -117,6 +117,7 @@ export default function NoteMaker() {
       });
       return;
     }
+    const date=new Date();
 
     const noteData = {
       title,
@@ -129,7 +130,9 @@ export default function NoteMaker() {
         day: "numeric",
         month: "long",
         year: "numeric"
-      })}`
+      })}`,
+      createdMonth:date.getMonth(),
+
     };
 
     try {

@@ -65,6 +65,18 @@ export function Sidebar({ open, onClose }) {
               <User className="h-5 w-5" />
               Account
             </NavLink>
+            <NavLink
+              to="/project"
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-colors",
+                  isActive ? "bg-primary/10 text-primary font-medium" : "text-muted-foreground hover:bg-muted"
+                )
+              }
+            >
+              <LayoutDashboard className="h-5 w-5" />
+              Projects
+            </NavLink>
 
             <NavLink
               to="/dashboard"
