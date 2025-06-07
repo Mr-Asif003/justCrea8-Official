@@ -22,8 +22,12 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "@/components/ui/use-toast";
 import {
   Camera, User, Mail, Key,
-  Info, AlertTriangle, Upload
+  Info, AlertTriangle, Upload,
+  Box,
+  Icon
 } from "lucide-react";
+import { Popover,PopoverTrigger,PopoverContent } from "@/components/ui/popover";
+import { Tab } from "@mui/material";
 
 export default function Account() {
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -31,7 +35,17 @@ export default function Account() {
   const [lastName, setLastName] = useState("");
   const [userEmail, setUserEmail] = useState("");
   const [bio, setBio] = useState("");
-
+  const [portfolio,setPortfolio] =useState('')
+  const [linkedInId,setLinkedInId]=useState('')
+  const [leetcodeId,setLeetCodeId]=useState('')
+  const [githubId,setgithubId]=useState('')
+  const [skills,setSkills]=useState('')
+ const [showProjectForm, setShowProjectForm] = useState(false)
+  const[projectMasterKey,setProjectMasterKey]=useState('')
+ const formatLink = (url: string) => {
+  if (!url) return "#";
+  return url.startsWith("http") ? url : `https://${url}`;
+};
   //database reference
   const user = auth.currentUser;
   useEffect(() => {
@@ -47,6 +61,13 @@ export default function Account() {
         setLastName(data.lastName || "");
         setUserEmail(data.email || "");
         setBio(data.bio || "");
+        setPortfolio(data.portfolio || "");
+        setLinkedInId(data.linkedInId || "");
+        setLeetCodeId(data.leetcodeId || "");
+        setgithubId(data.githubId || "");
+        setSkills(data.skills || "");
+        setProjectMasterKey(data.projectMasterKey || "");
+
       } else {
         console.log("No user document found.");
       }
@@ -65,7 +86,14 @@ export default function Account() {
         lastName,
         email: userEmail,
         bio,
+        portfolio,
+        linkedInId,
+        leetcodeId: leetcodeId||'',
+        githubId:  githubId||'',
+        skills: skills||'',
+        projectMasterKey: projectMasterKey||'',
         updatedAt: new Date()
+
       });
 
       toast({
@@ -115,7 +143,107 @@ export default function Account() {
             </div>
             <div className="text-center">
               <h3 className="text-lg font-medium">{firstName} {lastName}</h3>
-              <p className="text-sm text-muted-foreground mt-2">{bio}</p>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Bio</CardTitle>
+                  <CardDescription>{bio}</CardDescription>
+                </CardHeader>
+      
+              </Card>
+
+             <div className="space-y-2 mt-4 text-sm">
+  <div className="flex items-center gap-2">
+    <Mail className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+    <span className="text-gray-700 dark:text-gray-300">{userEmail}</span>
+  </div>
+
+  <div className="flex items-center gap-2">
+    <User className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+    <span className="text-gray-700 dark:text-gray-300">{firstName} {lastName}</span>
+  </div>
+
+  <div className="flex items-center gap-2">
+    <span className="text-gray-700 dark:text-gray-300">Skills: {skills}</span>
+  </div>
+
+  <div className="flex items-center gap-2">
+    <span className="text-gray-700 dark:text-gray-300">
+      Portfolio:{" "}
+      <a 
+         href={formatLink(portfolio)}
+        target="_blank" 
+        rel="noopener noreferrer" 
+        className="text-blue-600 dark:text-blue-400 hover:underline"
+      >
+        {portfolio}
+      </a>
+    </span>
+  </div>
+
+  <div className="flex items-center gap-2">
+    <span className="text-gray-700 dark:text-gray-300">
+      LinkedIn:{" "}
+      <a  href={formatLink(linkedInId)} 
+        target="_blank" 
+        rel="noopener noreferrer" 
+        className="text-blue-600 dark:text-blue-400 hover:underline"
+      >
+        {linkedInId}
+      </a>
+    </span>
+  </div>
+
+  <div className="flex items-center gap-2">
+    <span className="text-gray-700 dark:text-gray-300">
+      GitHub:{" "}
+      <a 
+         href={formatLink(githubId)} 
+        target="_blank" 
+        rel="noopener noreferrer" 
+        className="text-blue-600 dark:text-blue-400 hover:underline"
+      >
+        {githubId}
+      </a>
+    </span>
+  </div>
+
+  <div className="flex items-center gap-2">
+    <span className="text-gray-700 dark:text-gray-300">
+      LeetCode:{" "}
+      <a 
+         href={formatLink(leetcodeId)}
+        target="_blank" 
+        rel="noopener noreferrer" 
+        className="text-blue-600 dark:text-blue-400 hover:underline"
+      >
+        {leetcodeId}
+      </a>
+    </span>
+  </div>
+</div>
+
+
+              <Card className="mt-4 p-4 w-full border-none">
+
+                <CardHeader>
+                  <CardTitle>Contact</CardTitle>
+                  <CardDescription>{userEmail}</CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-col items-center">
+                  <div className="flex items-center gap-2">
+                    <Mail className="h-4 w-4" />
+                    <span>{userEmail}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    <span>{firstName} {lastName}</span>
+                  </div>
+                </CardContent>
+              </Card>
+
+             
+            
+
             </div>
           </CardContent>
         </Card>
@@ -175,6 +303,100 @@ export default function Account() {
                         onChange={(e) => setBio(e.target.value)}
                       />
                     </div>
+                    <Button
+                      variant="outline" onClick={()=>setShowProjectForm(!showProjectForm)}>Will you develop project ? </Button>
+                    {showProjectForm && (
+                      <>
+                     <h1 className="text-cyan-300 ml-2 text-sm">Below fields are necessary for Project Creation</h1>
+
+                    <div>
+                      <div className="flex items-center mb-4 ">
+
+                      <Label htmlFor="bio">Project Master Key</Label>
+                      
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button variant="outline" className="ml-2">
+                              <Info className="h-4 w-4" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-80">
+                            <p className="text-sm text-muted-foreground">
+                              This key is used to create and manage your projects. Keep it safe! and allow others to join your project.
+                              <br />
+                            </p>
+                          </PopoverContent>
+                        </Popover>
+                        
+                      
+                      </div>
+                      <Input
+                        id="projectMasterKey"
+                        placeholder="Enter your Project Master Key"
+                        className="resize-none"
+                        value={projectMasterKey}
+                        onChange={(e) => setProjectMasterKey(e.target.value)}
+                      />
+                    </div>
+
+                     <div>
+                      <Label htmlFor="bio">Github Id</Label>
+                      <Input
+                        id="github"
+                        placeholder="Enter your Github profile link"
+                        className="resize-none"
+                        value={githubId}
+                        onChange={(e) => setgithubId(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="bio">LinkedIn Id</Label>
+                      <Input
+                        id="linkedIn"
+                        placeholder="Enter your LinkedIn Id"
+                        className="resize-none"
+                        value={linkedInId}
+                        onChange={(e) => setLinkedInId(e.target.value)}
+                        
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="bio">Portfolio Link(optional)</Label>
+                      <Input
+                        id="portfolio"
+                        placeholder="Enter your portfolio link"
+                        className="resize-none"
+                        value={portfolio}
+                        onChange={(e) => setPortfolio(e.target.value)}
+                      />
+                    </div>
+                     <div>
+                      <Label htmlFor="leetcode">LeetCode(optional)</Label>
+                      <Input
+                        id="leetcode"
+                        placeholder="Enter your leetCode profile link"
+                        className="resize-none"
+                        value={leetcodeId}
+                        onChange={(e) => setLeetCodeId(e.target.value)}
+                      />
+                    </div>
+
+                        <div>
+                      <Label htmlFor="skill">Skills</Label>
+                      <Input
+                        id="skill"
+                        placeholder="Enter your Github Id"
+                        className="resize-none"
+                        value={skills}
+                        onChange={(e) => setSkills(e.target.value)}
+                      />
+                    </div>
+
+                    </>
+                    )}
+
+                    
+
                     <div>
                       <Label className="mb-2 block">Profile Picture</Label>
                       <div className="flex items-center gap-4">

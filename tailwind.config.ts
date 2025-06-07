@@ -106,6 +106,9 @@ export default {
         "fade-in": "fadeIn 0.3s ease-out",
         "slide-in-left": "slideInFromLeft 0.3s ease-out",
         "slide-in-right": "slideInFromRight 0.3s ease-out",
+         'spin-slow': 'spin 4s linear infinite',
+        // faster spin (2 seconds)
+        'spin-fast': 'spin 2s linear infinite',
       },
     },
   },

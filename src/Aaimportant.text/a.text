@@ -1,0 +1,7 @@
+
+home component design
+
+<section className={`flex flex-col sm:flex-row gap-4 ${theme === "dark" ? 'text-white' : 'text-black'}`}>
+        {/* Welcome Card */}
+        <div className={`w-full sm:w-2/3 xl:w-3/4 backdrop-blur-xl bg-white/10 border border-white/30 shadow-2xl p-4 flex items-center rounded-xl ${theme === "dark" ? 'bg-gradient-to-r from-black to-gray-800' : ''}`}>
+          <div className="w-2/3 flex flex-col justify-center px-2">

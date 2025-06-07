@@ -17,6 +17,7 @@ import {
 
 const Footer = ({
   brand = 'JustCrea8',
+  owner = 'Asif Khan',
   description = 'A short description about your platform or service goes here.',
   socials = [
     { icon: <Instagram className="h-5 w-5" />, href: 'https://www.instagram.com/_.mr_asif_/' },
@@ -58,6 +59,7 @@ const Footer = ({
               <Heart className="h-5 w-5 mr-2 text-blue-500" />
               {brand}
             </h4>
+              <p className='m-4 ml-0'> © 2025 Asif Khan. All rights reserved.</p>
             <p className="text-gray-400 mb-6">{description}</p>
             <div className="flex space-x-4">
               {socials.map((s, i) => (
@@ -97,6 +99,10 @@ const Footer = ({
           <div>
             <h4 className="text-xl font-bold mb-6 text-white">Contact Us</h4>
             <ul className="space-y-4">
+               <li className="flex items-start">
+                
+                <span className="text-gray-400">© Asif Khan</span>
+              </li>
               <li className="flex items-start">
                 <MapPin className="h-5 w-5 mr-3 text-blue-500 shrink-0 mt-1" />
                 <span className="text-gray-400">{contact.address}</span>
