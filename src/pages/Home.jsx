@@ -116,10 +116,7 @@ export default function Home() {
   return (
 
     <main className={`w-full min-h-screen ${containerBg} transition-all duration-1000  `}>
-      <header id="smart-header"  className={`p-4 px-10 flex  items-center justify-between w-full  fixed top-0 z-50 transition-transform duration-300  ${isDark
-        ? "bg-gradient-to-r from-[#0F0C25] to-[#0e7490] text-white"
-        : "bg-white text-gray-900 shadow-[0_10px_30px_rgba(144,224,239,0.3)]"
-        }`}>
+      <header id="smart-header"  className={`p-4 px-10 flex  items-center justify-between w-full  fixed top-0 z-50 transition-transform duration-300 backdrop-blur-xl  shadow-2xl ${isDark?'bg-gradient-to-r from-black to-gray-900':'backdrop-blur-none bg-gray-300'}`}>
         {/* Logo */}
         <div className="div">
         <span className={`text-3xl font-extrabold tracking-wide text-pink-600 ${themeMode == 'dark' ? "text-white" : ""} `}>
@@ -131,7 +128,7 @@ export default function Home() {
 
         </div>
 
-        <div className="hidden  sm:flex sm:w-[60%] xl:w-[45%] items-center gap-10 px-6 py-2 rounded-xl transition-all duration-500 bg-[#2E2B3F]">
+        <div className={`hidden  sm:flex sm:w-[60%] xl:w-[45%] items-center gap-10 px-6 py-2  transition-all duration-500 backdrop-blur-xl bg-white/10 border border-white/30 shadow-2xl p-4  rounded-xl bg-gradient-to-r from-black to-gray-800`}>
           <ul className="flex items-center justify-around gap-20 w-full">
             <ul className="flex gap-4 w-full">
               {navItems.map((label) => (

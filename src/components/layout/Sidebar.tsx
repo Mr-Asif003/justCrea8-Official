@@ -2,6 +2,7 @@ import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { auth, } from "@/Firebase/firebaseConfig";
 import {
   Home,
   User,
@@ -16,7 +17,7 @@ import {
 import { useAuth } from "@/contexts/AuthProvider";
 
 export function Sidebar({ open, onClose }) {
-  const { user } = useAuth();
+  const user=auth.currentUser
 
   return (
     <aside

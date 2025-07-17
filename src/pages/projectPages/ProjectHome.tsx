@@ -138,7 +138,7 @@ export default function ProjectHome() {
         {/* Create Project Card */}
         <div className={`w-full sm:w-1/3 xl:w-1/4 backdrop-blur-xl bg-white/10 border border-white/30 shadow-2xl p-4 flex items-center justify-between rounded-xl ${theme === "dark" ? 'bg-gradient-to-r from-black to-gray-800' : ''}`}>
           <div className="flex flex-col px-2">
-            <h2 className="text-lg font-semibold">Create Project</h2>
+            <h2 className="text-lg font-semibold">Create Team Now!</h2>
             <p className="text-xs">Start building your ideas</p>
           </div>
           <div className="p-2">
@@ -172,7 +172,7 @@ export default function ProjectHome() {
           <div className={`backdrop-blur-xl bg-white/10 border border-white/30 text-white shadow-2xl p-6 rounded-xl ${theme === "dark" ? 'bg-gradient-to-r from-black to-gray-800' : ''}`}>
             <div className="w-full flex justify-between items-center">
               <div className="text-center">
-                <h1 className="text-xl font-semibold">Join Project</h1>
+                <h1 className="text-xl font-semibold">Join Team Now!</h1>
                 <p className="text-sm">via Link</p>
               </div>
               <button

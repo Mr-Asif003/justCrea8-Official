@@ -70,7 +70,7 @@ interface Todo {
   endTimeMeridian: string;
 }
 
-export default function TodoMaker() {
+export default function TodoProject() {
   const [todos, setTodos] = useState([
 
   ]);
@@ -91,7 +91,8 @@ export default function TodoMaker() {
   const [taskStartTime, setTaskStartTime] = useState('');
   const [taskEndTime, setTaskEndTime] = useState('');
   const [taskEndDate, setTaskEndDate] = useState('')
-
+  const [taskEndTimeMeridian, setTaskEndTimeMeridian] = useState('');
+  const [taskStartTimeMeridian, setTaskStartTimeMeridian] = useState('');
   
     const now = new Date();
     const currentHour = now.getHours();
@@ -135,9 +136,10 @@ export default function TodoMaker() {
       });
       return;
     }
-  
+    const todoId = Date.now().toString();
     const date=new Date();
     const todo = {
+      id: todoId,
       title: newTodo,
       completed: false,
       priority: selectedPriority,
@@ -151,8 +153,8 @@ export default function TodoMaker() {
     
     };
     try {
-      const todoRef = collection(db, 'todos', user.uid, 'userTodos');
-      await addDoc(todoRef, todo); 
+      const todoRef = doc(db, 'todos', user.uid, 'userTodos', todoId);
+      await setDoc(todoRef, todo); // 👈 setDoc with custom ID
       setTodos([todo, ...todos]);
       console.log(todos)
       setNewTodo("");
@@ -295,9 +297,9 @@ export default function TodoMaker() {
   });
 
   return (
-    <div className="animate-fade-in">
+    <div className="animate-fade-in mt-4">
       <PageTitle
-        title="Todo List"
+        title="Project Todo List"
         description="Organize your tasks and stay productive."
       />
 
@@ -385,7 +387,7 @@ export default function TodoMaker() {
                 </div>
               </div>
 
-              <Button onClick={() => setTimerForm(true)} className={`p-2 bg-tranparent outline-1 outline-dotted ${timerForm ? "hidden" : ""}`}>
+              <Button onClick={() => setTimerForm(true)} className={`p-2 bg-tranparent outline-1 hover:bg-cyan-800 ${timerForm ? "hidden" : ""}`}>
                 <Check className="h-4 w-4 mr-1" /> Add
                 <Clock />
               </Button>
@@ -414,7 +416,10 @@ export default function TodoMaker() {
 
                     />
 
-                  
+                    <select className="ml-4 h-10 bg-transparent" value={taskStartTimeMeridian} onChange={(e) => { setTaskStartTimeMeridian(e.target.value) }} >
+                      <option>am</option>
+                      <option>pm</option>
+                    </select>
                   </div>
 
 
@@ -439,11 +444,14 @@ export default function TodoMaker() {
 
                     />
 
-                   
+                    <select className="ml-4 h-10 bg-transparent  " value={taskEndTimeMeridian} onChange={(e) => setTaskEndTimeMeridian(e.target.value)} >
+                      <option>am</option>
+                      <option>pm</option>
+                    </select>
                   </div>
 
 
-                  <Button onClick={() => setTimerForm(!timerForm)}>
+                  <Button className="bg-cyan-700" onClick={() => setTimerForm(!timerForm)}>
                     close <Clock />
                   </Button>
                 </div>
@@ -451,7 +459,7 @@ export default function TodoMaker() {
 
               )}
 
-              <Button onClick={addTodo} className="w-full">
+              <Button onClick={addTodo} className="w-full bg-cyan-400 hover:bg-cyan-800">
                 <Plus className="h-4 w-4 mr-2" /> Add Task
               </Button>
             </div>

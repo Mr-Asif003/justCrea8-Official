@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useTheme} from '@/contexts/ThemeContext'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
-import {NavLink, Link,useNavigate} from 'react-router-dom'
+import {NavLink, Link,useNavigate, useLocation} from 'react-router-dom'
 
 import {
   Card,
@@ -20,13 +20,19 @@ export default function UserProjects() {
     const navigate=useNavigate()
     const userName='ak'
      const handleView= (id) => {
-    navigate(`/project/${userName}/projects/project`,{
+    navigate(`/project/${userName}/teams/${teamId}/projects/${id}`,{
       state: { id },
     });
   };
+  const location=useLocation()
+  const { teamId } = location.state || {};
+  alert("dkfjd")
+  
+
+     
 
     const myTeam = [
-  {
+  { 
     id: 1,
     tName: 'Tech-rex',
     admin: 'Asif',
@@ -89,7 +95,7 @@ export default function UserProjects() {
           ? 'bg-gradient-to-r from-black to-gray-800 border-white/30 text-white' 
           : 'bg-white/10 text-black'}`}
     >
-      <h2 className="text-2xl font-semibold mb-4">Your Projects</h2>
+      <h2 className="text-2xl font-semibold mb-4">TeamName projects</h2>
       <Tabs defaultValue="overview" className="w-full">
         <TabsList className='hidden md:inline-block   justify-around '>
           <TabsTrigger value="overview" className='text-xs md:text-sm'>ALL</TabsTrigger>
@@ -102,7 +108,7 @@ export default function UserProjects() {
         <div className="md:hidden">
           <button onClick={(e)=>setShowMobileMenu(!showMobileMenu)}>
             <Menu/>
-          </button>
+          </button> 
           {showMobileMenu&&(
              <TabsList className='w-auto p-2  flex  justify-around '>
           <TabsTrigger value="overview" className='text-xs md:text-sm'>ALL</TabsTrigger>

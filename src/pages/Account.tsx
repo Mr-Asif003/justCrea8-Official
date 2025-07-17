@@ -42,10 +42,14 @@ export default function Account() {
   const [skills,setSkills]=useState('')
  const [showProjectForm, setShowProjectForm] = useState(false)
   const[projectMasterKey,setProjectMasterKey]=useState('')
+  
+
  const formatLink = (url: string) => {
   if (!url) return "#";
   return url.startsWith("http") ? url : `https://${url}`;
 };
+
+
   //database reference
   const user = auth.currentUser;
   useEffect(() => {
@@ -57,17 +61,17 @@ export default function Account() {
 
       if (docSnap.exists()) {
         const data = docSnap.data();
-        setFirstName(data.firstName || "");
-        setLastName(data.lastName || "");
-        setUserEmail(data.email || "");
-        setBio(data.bio || "");
-        setPortfolio(data.portfolio || "");
-        setLinkedInId(data.linkedInId || "");
-        setLeetCodeId(data.leetcodeId || "");
-        setgithubId(data.githubId || "");
-        setSkills(data.skills || "");
-        setProjectMasterKey(data.projectMasterKey || "");
-
+        setFirstName(data.firstName || "none");
+        setLastName(data.lastName || "none");
+        setUserEmail(data.email || "none");
+        setBio(data.bio || "none");
+        setPortfolio(data.portfolio || "none");
+        setLinkedInId(data.linkedInId || "none");
+        setLeetCodeId(data.leetcodeId || "none");
+        setgithubId(data.githubId || "none");
+        setSkills(data.skills || "none");
+        setProjectMasterKey(data.projectMasterKey || "none");
+      
       } else {
         console.log("No user document found.");
       }
@@ -78,13 +82,13 @@ export default function Account() {
 
   const handleSaveProfile = async () => {
     if (!user) return;
+    
 
     try {
       const userRef = doc(db, "users", user.uid);
       await setDoc(userRef, {
-        firstName,
-        lastName,
-        email: userEmail,
+        name: `${firstName} ${lastName}`,
+        email: user.email,
         bio,
         portfolio,
         linkedInId,
@@ -93,6 +97,7 @@ export default function Account() {
         skills: skills||'',
         projectMasterKey: projectMasterKey||'',
         updatedAt: new Date()
+
 
       });
 
@@ -107,6 +112,7 @@ export default function Account() {
 
   const handleDeleteAccount = () => {
     // Add your Firebase delete logic here
+    
     toast({
       title: "Account Deleted",
       description: "Your account has been deleted.",

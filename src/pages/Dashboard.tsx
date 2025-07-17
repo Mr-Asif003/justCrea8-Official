@@ -665,8 +665,8 @@ export default function Dashboard() {
             <Tabs defaultValue="reminders">
               <TabsList className="mb-4">
                 <TabsTrigger value="reminders">Reminders</TabsTrigger>
-                <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
-                <TabsTrigger value="recent">Recent Activity</TabsTrigger>
+                {/* <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
+                <TabsTrigger value="recent">Recent Activity</TabsTrigger> */}
               </TabsList>
 
               <TabsContent value="reminders" className="space-y-4">
@@ -683,7 +683,7 @@ export default function Dashboard() {
                       <div>
                         <h4 className="font-medium">{e.title}</h4>
                         <p className="text-sm text-muted-foreground">
-                          {e.activityDay} at {e.time}
+                          due on {e.activityDay} at {e.time}
                         </p>
                       </div>
                     </div>
@@ -693,7 +693,7 @@ export default function Dashboard() {
                       </Button>
                       {/* Format the createdAt timestamp */}
                       <p className="text-xs">
-                        Creation Date: {e.createdAt ? new Date(e.createdAt.seconds * 1000).toLocaleString() : "No Date"}
+                        Creation Date: {e.createdAt ? new Date(e.createdAt).toLocaleDateString() : 'N/A'}
                       </p>
                     </div>
                   </div>
@@ -728,76 +728,8 @@ export default function Dashboard() {
                 </div>
               )}
 
-              <TabsContent value="upcoming">
-                <div className="text-center py-8 text-muted-foreground">
-                  {/* <p>No upcoming events</p>
-                  <Button variant="outline" size="sm" className="mt-2 gap-1">
-                    <Plus className="h-4 w-4" /> Add Event
-                  </Button> */}
-                  {tommorrowaddActivityList.map((e) => (
-                    <div
-                      key={e.id}
-                      className="border mt-4 rounded-lg p-4 flex items-center justify-between"
-                    >
-                      <div className="flex items-start gap-4">
-                        <div className="bg-primary/10 text-primary rounded-full p-2">
-                          <Calendar className="h-5 w-5" />
-                        </div>
-                        <div>
-                          <h4 className="font-medium">{e.title}</h4>
-                          <p className="text-sm text-muted-foreground">
-                            {e.activityDay} at {e.time}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex flex-col justify-center items-center">
-                        <Button size="sm" variant="ghost">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                        {/* Format the createdAt timestamp */}
-                        <p className="text-xs">
-                          Creation Date: {e.createdAt ? new Date(e.createdAt.seconds * 1000).toLocaleString() : "No Date"}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-
-                </div>
-              </TabsContent>
-
-              <TabsContent value="recent">
-                <div className="space-y-4">
-                  <div className="flex items-center gap-4">
-                    <div className="bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400 p-2 rounded-full">
-                      <CheckSquare className="h-4 w-4" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="font-medium">Completed task: Project proposal</div>
-                      <div className="text-xs text-muted-foreground">Today at 10:34 AM</div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-4">
-                    <div className="bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400 p-2 rounded-full">
-                      <StickyNote className="h-4 w-4" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="font-medium">Created note: Meeting notes</div>
-                      <div className="text-xs text-muted-foreground">Yesterday at 4:12 PM</div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-4">
-                    <div className="bg-pink-100 text-pink-600 dark:bg-pink-900/30 dark:text-pink-400 p-2 rounded-full">
-                      <FileEdit className="h-4 w-4" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="font-medium">Published blog: Productivity tips</div>
-                      <div className="text-xs text-muted-foreground">3 days ago</div>
-                    </div>
-                  </div>
-                </div>
-              </TabsContent>
+              
+         
             </Tabs>
           </CardContent>
         </Card>

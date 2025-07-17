@@ -7,13 +7,14 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { ThemeHomeProvider } from "./contexts/themeC";
 import { AuthProvider } from "./contexts/AuthProvider";
 import AppRoutes from "./AppRoutes";
-
+import RouteLoader from "./pages/RouteLoader";
 const queryClient = new QueryClient();
 
 const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
+      <RouteLoader/>
         <ThemeHomeProvider>
           <AuthProvider>
             <ThemeProvider defaultTheme="system">

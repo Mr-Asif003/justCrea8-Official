@@ -1,69 +1,70 @@
-// contexts/AuthProvider.jsx
+// src/contexts/AuthProvider.jsx
 import { createContext, useContext, useState, useEffect } from "react";
-import { auth } from "@/Firebase/firebaseConfig"; // Import Firebase config
-import { onAuthStateChanged, signOut } from "firebase/auth";
-import Cookies from 'js-cookie'
-// Create Auth Context
+import { auth } from "@/Firebase/firebaseConfig";
+import { onAuthStateChanged, signOut, getIdTokenResult } from "firebase/auth";
+
 const AuthContext = createContext();
 
-// AuthProvider component to wrap your app and manage user authentication
 export const AuthProvider = ({ children }) => {
-  const [isLogin, setIsLogin] = useState(false); // Default to false, since user is not logged in initially
-  const [user, setUser] = useState(null); // Store current user object
- 
-  const setSession=()=>{
-    const sessionDuration=60*60*2*1000
+  const [isLogin, setIsLogin] = useState(false);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true); // Added loading state
 
-    setTimeout(async () => {
-      await signOut(auth);
-      alert("Session expired. Please log in again.");
-      
-      window.location.href = "/login"; // redirect to login
-    }, sessionDuration);
-  }
-
-
-
-
-  // Set up listener for changes in authentication state
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+     const timer=2*60*60*1000;
+      setTimeout(() => {
+        if(auth.currentUser){
+          alert('session expired, please login again');
+          logout();
+        }
+      },timer)
+  }, [auth.currentUser]);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
-        setSession()
-        setIsLogin(true); // User is logged in
-        setUser(currentUser); // Store user info
+        await currentUser.reload(); // Ensure fresh verification status
+
+        if (currentUser.emailVerified) {
+          const tokenResult = await getIdTokenResult(currentUser, true); // fresh token
+          setUser({
+            ...currentUser,
+            token: tokenResult.token,
+            claims: tokenResult.claims, // useful for role-based auth
+          });
+          setIsLogin(true);
+        } else {
+          await signOut(auth); // Force logout if email not verified
+          setUser(null);
+          setIsLogin(false);
+        }
       } else {
-        setIsLogin(false); // No user logged in
-        setUser(null); // Clear user data
+        setUser(null);
+        setIsLogin(false);
       }
+
+      setLoading(false);
     });
 
-    return () => unsubscribe(); // Clean up listener on component unmount
+    return () => unsubscribe();
   }, []);
 
-  const login = async (email, password) => {
-    // Firebase login logic (use signInWithEmailAndPassword or other methods)
-    // Example: await signInWithEmailAndPassword(auth, email, password);
-  };
 
   const logout = async () => {
     try {
-      await signOut(auth); // Firebase logout logic
-      setIsLogin(false); // Set login state to false
-      setUser(null); // Clear user data
+      await signOut(auth);
+      setIsLogin(false);
+      setUser(null);
     } catch (error) {
-      console.error("Error logging out:", error);
+      console.error("Logout error:", error.message);
     }
   };
 
   return (
-    <AuthContext.Provider value={{ isLogin, user, login, logout }}>
+    <AuthContext.Provider value={{ isLogin, user, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-// Custom hook to access auth state
-export const useAuth = () => {
-  return useContext(AuthContext);
-};
+export const useAuth = () => useContext(AuthContext);

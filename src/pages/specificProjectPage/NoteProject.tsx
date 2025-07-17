@@ -72,7 +72,7 @@ const colorClasses: Record<NoteColor, string> = {
   purple: "bg-purple-500 dark:bg-purple-600",
 };
 
-export default function NoteMaker() {
+export default function NoteProject() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
