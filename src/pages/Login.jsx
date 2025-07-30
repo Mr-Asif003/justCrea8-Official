@@ -12,7 +12,11 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
    
-  const toggleModal = () => setShowModal(false);
+
+  const handleClose = () => {
+    setShowModal(false);
+    navigate("/home");
+  };
 
   const handleEsc = useCallback((e) => {
     if (e.key === "Escape") toggleModal();
@@ -70,7 +74,7 @@ export default function Login() {
               <h2 className="text-2xl font-bold text-purple-600 dark:text-purple-400">Welcome Back</h2>
               <Link
                 to="/home"
-                onClick={toggleModal}
+                onClick={handleClose}
                 className="text-lg font-semibold text-gray-600 dark:text-white hover:text-red-500"
               >
                 ✕

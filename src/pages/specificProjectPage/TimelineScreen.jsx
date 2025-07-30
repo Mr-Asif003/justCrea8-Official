@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   VerticalTimeline,
   VerticalTimelineElement,
@@ -10,9 +10,13 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { doc, updateDoc } from 'firebase/firestore';
+import { toast } from 'sonner';
+import { db } from '@/Firebase/firebaseConfig';
 
-export default function TimelineScreen() {
+export default function TimelineScreen({projectDetails}) {
   // Default phases
+  console.log(projectDetails)
   const [phases, setPhases] = useState([
     'Requirement Analysis',
     'System Design',
@@ -32,17 +36,40 @@ export default function TimelineScreen() {
     description: '',
     phase: phases[0],
   });
+  useEffect(()=>{
+    if(projectDetails?.timelines){
+      setTimelineData(projectDetails.timelines)
+    }
+  },[])
 
   const handleInputChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleAddTimeline = () => {
-    if (form.title && form.date) {
-      setTimelineData([...timelineData, form]);
-      setForm({ ...form, title: '', subtitle: '', date: '', description: '' });
+ const handleAddTimeline = async () => {
+  if (form.title && form.date) {
+    const newTimeline = [...timelineData, form];
+    setTimelineData(newTimeline);
+    try {
+      const projectRef = doc(db, 'projects', projectDetails.projectId);
+      await updateDoc(projectRef, { timelines: newTimeline });
+      toast.success('Timeline added!');
+      setForm({
+        ...form,
+        title: '',
+        subtitle: '',
+        date: '',
+        description: '',
+      });
+    } catch (e) {
+      console.error(e);
+      toast.error('Error adding timeline');
     }
-  };
+  } else {
+    toast.error('Please fill title and date');
+  }
+};
+
 
   const handleAddPhase = () => {
     if (newPhase.trim() && !phases.includes(newPhase)) {

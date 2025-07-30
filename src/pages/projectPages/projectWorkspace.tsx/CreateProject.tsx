@@ -22,8 +22,8 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Button,
 } from "@mui/material";
-import { Button } from "@mui/material";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -48,6 +48,7 @@ export default function CreateProject({ teamId, onClose }) {
     adminName: "",
     managerUid: "",
     managerName: "",
+    domain: "",
   });
 
   useEffect(() => {
@@ -62,8 +63,7 @@ export default function CreateProject({ teamId, onClose }) {
         return toast.error("Only the team admin can create projects.");
       }
 
-      const contributors =
-        Object.values(data.members?.contributors || {}) || [];
+      const contributors = Object.values(data.members?.contributors || {}) || [];
 
       setTeamAdmin(admin);
       setTeamMembers(contributors);
@@ -85,8 +85,7 @@ export default function CreateProject({ teamId, onClose }) {
           const user = snap.exists() ? snap.data() : {};
           return {
             uid: m.uid,
-            name:
-              (user.firstName || "") + " " + (user.lastName || "") || m.name,
+            name: (user.firstName || "") + " " + (user.lastName || "") || m.name,
             email: user.email || m.email,
           };
         })
@@ -103,6 +102,7 @@ export default function CreateProject({ teamId, onClose }) {
         status: form.status,
         budget: form.budget,
         password: form.password,
+        domain: form.domain,
         teamId,
         memberUids: selectedMembers.map((m) => m.uid),
         projectMembers,
@@ -155,62 +155,27 @@ export default function CreateProject({ teamId, onClose }) {
 
         <form onSubmit={handleConfirmation} className="space-y-6">
           <div className="grid md:grid-cols-2 gap-4">
-            <InputField
-              label="Project Name"
-              value={form.projectName}
-              onChange={(val) => setForm({ ...form, projectName: val })}
-            />
-            <InputField
-              label="Project Budget"
-              type="number"
-              value={form.budget}
-              onChange={(val) => setForm({ ...form, budget: val })}
-            />
-            <InputField
-              label="Project Password"
-              value={form.password}
-              onChange={(val) => setForm({ ...form, password: val })}
-            />
+            <InputField label="Project Name" value={form.projectName} onChange={(val) => setForm({ ...form, projectName: val })} />
+            <InputField label="Project Budget" type="number" value={form.budget} onChange={(val) => setForm({ ...form, budget: val })} />
+            <InputField label="Project Password" value={form.password} onChange={(val) => setForm({ ...form, password: val })} />
           </div>
 
           <div>
             <Label>Description</Label>
             <Textarea
               value={form.description}
-              onChange={(e) =>
-                setForm({ ...form, description: e.target.value })
-              }
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
             />
           </div>
 
           <div className="grid md:grid-cols-2 gap-4">
-            <InputField
-              label="Start Date"
-              type="date"
-              value={form.startAt}
-              onChange={(val) => setForm({ ...form, startAt: val })}
-            />
-            <InputField
-              label="End Date"
-              type="date"
-              value={form.endAt}
-              onChange={(val) => setForm({ ...form, endAt: val })}
-            />
+            <InputField label="Start Date" type="date" value={form.startAt} onChange={(val) => setForm({ ...form, startAt: val })} />
+            <InputField label="End Date" type="date" value={form.endAt} onChange={(val) => setForm({ ...form, endAt: val })} />
           </div>
 
-          <SelectField
-            label="Priority"
-            value={form.priority}
-            options={["High", "Medium", "Low"]}
-            onChange={(val) => setForm({ ...form, priority: val })}
-          />
-          <SelectField
-            label="Status"
-            value={form.status}
-            options={["Planning", "In Progress", "Completed"]}
-            onChange={(val) => setForm({ ...form, status: val })}
-          />
-
+          <SelectField label="Priority" value={form.priority} options={["High", "Medium", "Low"]} onChange={(val) => setForm({ ...form, priority: val })} />
+          <SelectField label="Status" value={form.status} options={["Planning", "In Progress", "Completed"]} onChange={(val) => setForm({ ...form, status: val })} />
+          <SelectField label="Project Domain" value={form.domain} options={["Web", "App", "Web & App", "AI/ML", "Data Science", "Other"]} onChange={(val) => setForm({ ...form, domain: val })} />
           <SelectField
             label="Project Manager"
             value={form.managerUid}
@@ -232,9 +197,7 @@ export default function CreateProject({ teamId, onClose }) {
               value={selectedMembers.map((m) => m.uid)}
               onChange={(e) => {
                 const uids = e.target.value;
-                const members = teamMembers.filter((m) =>
-                  uids.includes(m.uid)
-                );
+                const members = teamMembers.filter((m) => uids.includes(m.uid));
                 setSelectedMembers(members);
               }}
               input={<OutlinedInput label="Project Members" />}
@@ -258,9 +221,7 @@ export default function CreateProject({ teamId, onClose }) {
             >
               {teamMembers.map((m) => (
                 <MenuItem key={m.uid} value={m.uid}>
-                  <Checkbox
-                    checked={selectedMembers.some((x) => x.uid === m.uid)}
-                  />
+                  <Checkbox checked={selectedMembers.some((x) => x.uid === m.uid)} />
                   <ListItemText primary={m.name} />
                 </MenuItem>
               ))}
@@ -287,7 +248,6 @@ export default function CreateProject({ teamId, onClose }) {
         </form>
       </div>
 
-      {/* Confirmation Dialog */}
       <Dialog open={confirmationOpen} onClose={() => setConfirmationOpen(false)}>
         <DialogTitle>⚠ Confirm Project Creation</DialogTitle>
         <DialogContent>
@@ -340,17 +300,15 @@ const SelectField = ({ label, value, options, onChange }) => (
         },
       }}
     >
-      {options.map((opt) =>
-        typeof opt === "object" ? (
-          <MenuItem key={opt.value} value={opt.value}>
-            {opt.label}
+      {options.map((opt, idx) => {
+        const key = typeof opt === "object" ? opt.value : opt;
+        const label = typeof opt === "object" ? opt.label : opt;
+        return (
+          <MenuItem key={key || idx} value={key}>
+            {label}
           </MenuItem>
-        ) : (
-          <MenuItem key={opt} value={opt}>
-            {opt}
-          </MenuItem>
-        )
-      )}
+        );
+      })}
     </Select>
   </FormControl>
 );

@@ -41,7 +41,8 @@ import NoteProject from "./pages/specificProjectPage/NoteProject";
 import ProjectSettingsScreen from "./pages/projectPages/ProjectSetting";
 import Poll from "./pages/specificProjectPage/Poll";
 import TimelineScreen from "./pages/specificProjectPage/TimelineScreen";
-
+import KanbanBoard from "./pages/specificProjectPage/KanbanBoard";
+import SpecificProjectHome from "./pages/specificProjectPage/SpecificProjectHome";
 import TeamsLayout from "./components/layout/TeamsLayout";
 import TeamLayout from "./components/layout/TeamLayout";
 import UserTeams from "./pages/projectPages/UserTeams";
@@ -114,7 +115,9 @@ const AppRoutes = () => {
                 <Route path="projects" element={<UserProjects />} />
 
                 <Route path=":projectId" element={<ProjectSpecificLayout />}>
-                  <Route index element={<Project />} />
+                  <Route index element={<SpecificProjectHome />} />
+                  <Route path='p' element={<Project />} />
+
                   <Route path="workspace" element={<WorkSpace />} />
                   <Route path="poll" element={<Poll />} />
                   <Route path="chat" element={<TeamChatScreen />} />
@@ -127,6 +130,7 @@ const AppRoutes = () => {
                   <Route path="todos" element={<TodoProject />} />
                   <Route path="notes" element={<NoteProject />} />
                   <Route path="setting" element={<ProjectSettingsScreen />} />
+                  <Route path='kanban' element={<KanbanBoard />} />
                 </Route>
               </Route>
             </Route>

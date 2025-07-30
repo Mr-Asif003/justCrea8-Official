@@ -1,120 +1,81 @@
-import React, { useState } from "react";
+// ProjectDashboard.tsx
+
+import React, { useEffect, useState } from "react";
 import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
+  Card, CardHeader, CardTitle, CardContent,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
+  Select, SelectTrigger, SelectValue,
+  SelectContent, SelectItem,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CalendarDays, CheckCircle, Edit, Plus } from "lucide-react";
 import {
-  CalendarDays,
-  CheckCircle,
-  MessageCircle,
-  Edit,
-  NotebookText,
-  Settings,
-} from "lucide-react";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
+  BarChart, Bar, XAxis, YAxis, Tooltip,
+  PieChart, Pie, Cell, ResponsiveContainer,
 } from "recharts";
-import TimelineScreen from "./TimelineScreen";
-import CostEstimator from "./PredictCost";
+import { doc, updateDoc } from "firebase/firestore";
+import { db } from "@/Firebase/firebaseConfig";
+import { toast } from "sonner";
 
 const COLORS = ["#06b6d4", "#f59e0b", "#10b981", "#ef4444"];
 
-export default function ProjectDashboard() {
+export default function ProjectDashboard({ projectDetails, projectId }) {
+  const [projectData, setProjectData] = useState(projectDetails || {});
   const [editing, setEditing] = useState(false);
   const [editToday, setEditToday] = useState(false);
-  const [customDate, setCustomDate] = useState("");
-  const [projectStatus, setProjectStatus] = useState("Ongoing");
-  const [phaseProgress, setPhaseProgress] = useState(65);
-  const [showProjectStatus, setShowProjectStatus] = useState(false);
-  const [editPhaseDist, setEditPhaseDist] = useState(false);
-  const [editTaskProgress, setEditTaskProgress] = useState(false);
+  const [editStatus, setEditStatus] = useState(false);
   const [editWorkload, setEditWorkload] = useState(false);
-  const [milestones, setMilestones] = useState([
-    "Initial Brief",
-    "Prototype Release",
-    "Client Review",
-  ]);
-  const [newMilestone, setNewMilestone] = useState("");
-  const [documents] = useState(["Roadmap.pdf", "UI_Design.fig", "api_specs.json"]);
-  const [team] = useState(["Alice", "Bob", "Charlie"]);
-  const [goals] = useState([
-    "Launch MVP by Friday",
-    "Write unit tests",
-    "Set up database backups",
-    "Improve loading speed",
-  ]);
-  const [phaseData, setPhaseData] = useState([
-    { name: "Planning", value: 20 },
-    { name: "Development", value: 40 },
-    { name: "Testing", value: 25 },
-    { name: "Launch", value: 15 },
-  ]);
-  const [performanceData, setPerformanceData] = useState([
-    { name: "Dev Team", completed: 10 },
-    { name: "QA Team", completed: 7 },
-    { name: "Design", completed: 12 },
-    { name: "PM", completed: 4 },
-  ]);
-  const [workloadData, setWorkloadData] = useState([
-    { name: "Alice", tasks: 8 },
-    { name: "Bob", tasks: 12 },
-    { name: "Charlie", tasks: 5 },
-  ]);
+  const [editPhase, setEditPhase] = useState(false);
+  const [customDate, setCustomDate] = useState("");
+  const [newWorkload, setNewWorkload] = useState({ name: "", tasks: "" });
+  const [newPhase, setNewPhase] = useState({ name: "", value: "" });
 
-  const handlePhaseDataChange = (index, field, value) => {
-    const updated = [...phaseData];
+  useEffect(() => {
+    if (projectDetails) {
+      setProjectData(projectDetails);
+    }
+  }, [projectDetails]);
+
+  const updateArrayField = (type, index, field, value) => {
+    const updated = [...(projectData?.[type] || [])];
     updated[index][field] = value;
-    setPhaseData(updated);
+    setProjectData((prev) => ({ ...prev, [type]: updated }));
   };
 
-  const handlePerformanceChange = (index, field, value) => {
-    const updated = [...performanceData];
-    updated[index][field] = value;
-    setPerformanceData(updated);
+  const addToArrayField = (type, newItem) => {
+    const updated = [...(projectData?.[type] || []), newItem];
+    setProjectData((prev) => ({ ...prev, [type]: updated }));
   };
 
-  const handleWorkloadChange = (index, field, value) => {
-    const updated = [...workloadData];
-    updated[index][field] = value;
-    setWorkloadData(updated);
-  };
-
-  const handleAddMilestone = () => {
-    if (newMilestone.trim()) {
-      setMilestones([...milestones, newMilestone]);
-      setNewMilestone("");
+  const handleSave = async () => {
+    try {
+      await updateDoc(doc(db, "projects", projectId), projectData);
+      toast.success("✅ Project updated");
+      setEditing(false);
+    } catch (err) {
+      console.error(err);
+      toast.error("❌ Failed to update project");
     }
   };
 
+  if (!projectData || Object.keys(projectData).length === 0) return <div className="p-6">Loading project...</div>;
+
+  const today = new Date();
+  const endDate = new Date(projectData.endAt);
+  const startDate = new Date(projectData.startAt);
+  const totalDays = Math.max(1, (endDate - startDate) / (1000 * 60 * 60 * 24));
+  const leftDays = Math.max(0, (endDate - today) / (1000 * 60 * 60 * 24));
+
   return (
-    <div className="min-h-screen p-6 space-y-6 bg-background text-foreground">
+    <div className="p-6 space-y-6">
       <header className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-cyan-500">🚀 Project Dashboard</h1>
         <Button variant="outline" onClick={() => setEditing(!editing)}>
-          <Settings className="w-4 h-4 mr-2" />
+          <Edit className="w-4 h-4 mr-2" />
           {editing ? "Done" : "Edit"}
         </Button>
       </header>
@@ -122,15 +83,11 @@ export default function ProjectDashboard() {
       <Tabs defaultValue="overview">
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
-          
           <TabsTrigger value="predict">Predict</TabsTrigger>
-          
-         <TabsTrigger value="subteams">Subteams</TabsTrigger>
         </TabsList>
 
-        {/* Overview Tab */}
         <TabsContent value="overview">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-3 gap-6">
             {/* Today */}
             <Card>
               <CardHeader className="flex justify-between">
@@ -145,61 +102,76 @@ export default function ProjectDashboard() {
                 {editToday ? (
                   <Input type="date" value={customDate} onChange={(e) => setCustomDate(e.target.value)} />
                 ) : (
-                  <p>
-                    {customDate
-                      ? new Date(customDate).toLocaleDateString("en-US", {
-                          weekday: "long",
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                        })
-                      : new Date().toLocaleDateString("en-US", {
-                          weekday: "long",
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                        })}
-                  </p>
+                  <>
+                    <p>{today.toDateString()}</p>
+                    <p className="text-sm text-gray-400">End Date: {endDate.toDateString()}</p>
+                    <ResponsiveContainer width="100%" height={100}>
+                      <BarChart data={[
+                        { name: "Time Left", value: leftDays },
+                        { name: "Total Time", value: totalDays },
+                      ]}>
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip />
+                        <Bar dataKey="value" fill="#06b6d4" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                    <p className="text-sm mt-2">{Math.ceil(leftDays)} days left</p>
+                  </>
                 )}
               </CardContent>
             </Card>
 
-            {/* Project Status */}
+            {/* Status */}
             <Card>
               <CardHeader className="flex justify-between">
                 <CardTitle className="flex items-center gap-2 text-green-500">
-                  <CheckCircle size={20} /> Project Status
+                  <CheckCircle size={20} /> Status
                 </CardTitle>
-                <Button size="sm" variant="ghost" onClick={() => setShowProjectStatus(!showProjectStatus)}>
+                <Button size="sm" variant="ghost" onClick={() => setEditStatus(!editStatus)}>
                   <Edit size={16} />
                 </Button>
               </CardHeader>
               <CardContent>
-                {showProjectStatus && (
-                  <div className="space-y-2 mb-3">
+                {editStatus ? (
+                  <div className="space-y-2">
                     <Input
                       type="number"
-                      value={phaseProgress}
-                      onChange={(e) => setPhaseProgress(Number(e.target.value))}
+                      value={projectData.phaseProgress}
+                      onChange={(e) =>
+                        setProjectData((prev) => ({
+                          ...prev,
+                          phaseProgress: Number(e.target.value),
+                        }))
+                      }
                     />
-                    <Select onValueChange={(val) => setProjectStatus(val)}>
-                      <SelectTrigger className="w-full">
+                    <Select
+                      value={projectData.status}
+                      onValueChange={(val) =>
+                        setProjectData((prev) => ({ ...prev, status: val }))
+                      }
+                    >
+                      <SelectTrigger>
                         <SelectValue placeholder="Status" />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="Planning">Planning</SelectItem>
                         <SelectItem value="Ongoing">Ongoing</SelectItem>
                         <SelectItem value="Completed">Completed</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
+                ) : (
+                  <>
+                    <p>Status: <span className="text-yellow-500">{projectData.status}</span></p>
+                    <p>Progress: {projectData.phaseProgress}%</p>
+                    <Progress value={projectData.phaseProgress} className="mt-2" />
+                  </>
                 )}
-                <p>Status: <span className="text-yellow-500">{projectStatus}</span></p>
-                <p>Completion: {phaseProgress}%</p>
-                <Progress value={phaseProgress} className="mt-2" />
               </CardContent>
             </Card>
 
-            {/* Team Workload */}
+            {/* Workload */}
             <Card>
               <CardHeader className="flex justify-between">
                 <CardTitle>👥 Team Workload</CardTitle>
@@ -209,24 +181,31 @@ export default function ProjectDashboard() {
               </CardHeader>
               <CardContent>
                 {editWorkload ? (
-                  workloadData.map((member, i) => (
-                    <div key={i} className="flex items-center gap-2 mb-2">
-                      <Input
-                        className="w-1/2"
-                        value={member.name}
-                        onChange={(e) => handleWorkloadChange(i, "name", e.target.value)}
-                      />
-                      <Input
-                        className="w-1/2"
-                        type="number"
-                        value={member.tasks}
-                        onChange={(e) => handleWorkloadChange(i, "tasks", +e.target.value)}
-                      />
+                  <>
+                    {(projectData.workloadData || []).map((m, i) => (
+                      <div key={i} className="flex gap-2 mb-2">
+                        <Input
+                          value={m.name}
+                          onChange={(e) => updateArrayField("workloadData", i, "name", e.target.value)}
+                          className="w-1/2"
+                        />
+                        <Input
+                          type="number"
+                          value={m.tasks}
+                          onChange={(e) => updateArrayField("workloadData", i, "tasks", +e.target.value)}
+                          className="w-1/2"
+                        />
+                      </div>
+                    ))}
+                    <div className="flex gap-2">
+                      <Input placeholder="Name" value={newWorkload.name} onChange={(e) => setNewWorkload({ ...newWorkload, name: e.target.value })} />
+                      <Input placeholder="Tasks" type="number" value={newWorkload.tasks} onChange={(e) => setNewWorkload({ ...newWorkload, tasks: e.target.value })} />
+                      <Button variant="ghost" onClick={() => addToArrayField("workloadData", { ...newWorkload, tasks: +newWorkload.tasks })}><Plus size={16} /></Button>
                     </div>
-                  ))
+                  </>
                 ) : (
                   <ResponsiveContainer width="100%" height={200}>
-                    <BarChart data={workloadData}>
+                    <BarChart data={projectData.workloadData}>
                       <XAxis dataKey="name" />
                       <YAxis />
                       <Tooltip />
@@ -238,38 +217,36 @@ export default function ProjectDashboard() {
             </Card>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-            {/* Phase Distribution */}
+          {/* Phase */}
+          <div className="grid grid-cols-1 md:grid-cols-2 mt-6 gap-6">
             <Card>
               <CardHeader className="flex justify-between">
                 <CardTitle>📊 Phase Distribution</CardTitle>
-                <Button size="sm" variant="ghost" onClick={() => setEditPhaseDist(!editPhaseDist)}>
+                <Button size="sm" variant="ghost" onClick={() => setEditPhase(!editPhase)}>
                   <Edit size={16} />
                 </Button>
               </CardHeader>
               <CardContent>
-                {editPhaseDist ? (
-                  phaseData.map((item, i) => (
-                    <div key={i} className="flex gap-2 mb-2">
-                      <Input
-                        className="w-1/2"
-                        value={item.name}
-                        onChange={(e) => handlePhaseDataChange(i, "name", e.target.value)}
-                      />
-                      <Input
-                        className="w-1/2"
-                        type="number"
-                        value={item.value}
-                        onChange={(e) => handlePhaseDataChange(i, "value", +e.target.value)}
-                      />
+                {editPhase ? (
+                  <>
+                    {(projectData.phaseData || []).map((p, i) => (
+                      <div key={i} className="flex gap-2 mb-2">
+                        <Input value={p.name} onChange={(e) => updateArrayField("phaseData", i, "name", e.target.value)} className="w-1/2" />
+                        <Input type="number" value={p.value} onChange={(e) => updateArrayField("phaseData", i, "value", +e.target.value)} className="w-1/2" />
+                      </div>
+                    ))}
+                    <div className="flex gap-2">
+                      <Input placeholder="Phase" value={newPhase.name} onChange={(e) => setNewPhase({ ...newPhase, name: e.target.value })} />
+                      <Input placeholder="%" type="number" value={newPhase.value} onChange={(e) => setNewPhase({ ...newPhase, value: e.target.value })} />
+                      <Button variant="ghost" onClick={() => addToArrayField("phaseData", { ...newPhase, value: +newPhase.value })}><Plus size={16} /></Button>
                     </div>
-                  ))
+                  </>
                 ) : (
                   <ResponsiveContainer width="100%" height={200}>
                     <PieChart>
-                      <Pie data={phaseData} cx="50%" cy="50%" outerRadius={60} dataKey="value">
-                        {phaseData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      <Pie data={projectData.phaseData} cx="50%" cy="50%" outerRadius={60} dataKey="value">
+                        {projectData.phaseData.map((_, i) => (
+                          <Cell key={i} fill={COLORS[i % COLORS.length]} />
                         ))}
                       </Pie>
                       <Tooltip />
@@ -278,27 +255,20 @@ export default function ProjectDashboard() {
                 )}
               </CardContent>
             </Card>
-
-      
-         
           </div>
+
+          {editing && (
+            <div className="flex justify-end pt-4">
+              <Button onClick={handleSave} className="rounded-xl px-6">
+                💾 Save Changes
+              </Button>
+            </div>
+          )}
         </TabsContent>
 
-        {/* Cost Estimator...*/}
         <TabsContent value="predict">
-          <CostEstimator />
+          <p className="text-muted-foreground">Cost Estimator or AI module goes here.</p>
         </TabsContent>
-
-
-
-    
-        {/* Subteams */}
-        <TabsContent value="subteams">
-          <div className="space-y-2">
-            <h1>Coming soon ....</h1>
-          </div>
-        </TabsContent>
-      
       </Tabs>
     </div>
   );

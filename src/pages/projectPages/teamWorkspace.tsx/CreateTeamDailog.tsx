@@ -8,7 +8,7 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { Button } from "@/components/ui/button";
-import CreateTeam from "./CreateTeam"; // Adjust the path to your component
+import CreateTeam from "./CreateTeam"; // Adjust the path if needed
 
 export default function CreateTeamDialog({ open, onClose }) {
   return (
@@ -21,17 +21,26 @@ export default function CreateTeamDialog({ open, onClose }) {
         className: "bg-white dark:bg-gray-900 w-full h-full",
       }}
     >
-      <div className="flex justify-between items-center px-6 pt-4 pb-2 border-b dark:border-gray-700">
-        <DialogTitle className="text-cyan-500 font-mono text-xl">Create Team</DialogTitle>
+      {/* Header */}
+      <div className="flex justify-between items-center px-4 sm:px-6 pt-4 pb-2 border-b dark:border-gray-700">
+        <DialogTitle className="text-cyan-500 font-mono text-xl">
+          Create Team
+        </DialogTitle>
         <IconButton onClick={onClose} className="text-cyan-500">
           <CloseIcon />
         </IconButton>
       </div>
 
-      <DialogContent className="p-6 mx-20 overflow-y-auto">
-        <CreateTeam />
+      {/* Content */}
+      <DialogContent
+        className="px-4 sm:px-6 py-4 overflow-y-auto max-h-[calc(100vh-140px)]"
+      >
+        <div className="w-full max-w-4xl mx-auto">
+          <CreateTeam />
+        </div>
       </DialogContent>
 
+      {/* Footer Actions */}
       <DialogActions className="flex justify-center py-4 border-t dark:border-gray-700">
         <Button
           onClick={onClose}

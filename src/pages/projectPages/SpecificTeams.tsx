@@ -9,7 +9,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Fade } from "react-awesome-reveal";
 import TypeWriterEffect from "react-typewriter-effect";
-import { User, CalendarClock, CheckCircle2, CirclePlus } from "lucide-react";
+import { User, CalendarClock, CheckCircle2, CirclePlus, MapPin, Calendar, Users } from "lucide-react";
 import { toast } from "sonner";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/Firebase/firebaseConfig";
@@ -17,7 +17,7 @@ import pm from "../../assets/images/pm.jpg";
 import CreateProjectDialog from "./projectWorkspace.tsx/CreateProjectDialog";
 import JoinProjectDialog from "./projectWorkspace.tsx/JoinProjectDailog";
 import { Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
-import { set } from "date-fns";
+import SpecificTeamMembers from "./SpecificTeamMembers";
 
 export default function SpecificTeams() {
   const { theme } = useTheme();
@@ -76,7 +76,7 @@ export default function SpecificTeams() {
       if (projects.length === 0) {
         toast.info("No projects found for this team.");
       }
-      console.log("Projects fetched:", projects);
+     
     };
 
     if (projectIds.length > 0) fetchProjects();
@@ -99,13 +99,32 @@ const handleConfirm = () => {
   };
 
   const handleNavigation = (projectId) => {
-    navigate(`./{projectId}`)
-  };
+  navigate(`./${projectId}`, {
+    state: {
+      projectId: projectId,
+    },
+  });
+};
+  console.log(teamData, "teamData");
+  const ad=teamData?.admin 
+  
+  const con= teamData?.members.contributors || [];
+
+  const team=[
+    { name:ad?.[0]?.name || "N/A", role: "admin", email: ad?.[0]?.email || "N/A" },
+    ...con.map((member) => ({
+      name: member.name || "N/A",
+      role: member.role || "contributor",
+      email: member.email || "N/A"
+    }))   
+  ]
+  console.log(team, "team data for members");
+  console.log(projectData,'dfkas')
 
   return (
-    <div className="px-6 py-10 space-y-10">
+    <div className="mx-auto px-6 py-10 space-y-10">
       {/* HEADER */}
-      <section className={`rounded-xl shadow-md p-6 flex flex-col md:flex-row gap-6 ${theme === "dark" ? "bg-gradient-to-r from-black to-gray-900 text-white" : "bg-white text-black"}`}>
+      <section className={`rounded-xl  border border-cyan-500 shadow-md shadow-purple-500 backdrop-blur-sm p-6 flex flex-col md:flex-row gap-6 ${theme === "dark" ? "bg-gradient-to-r from-black to-gray-900 text-white" : "bg-white text-black"}`}>
         <div className="flex-1">
           <Fade>
             <h1 className="text-2xl font-bold text-cyan-400 mb-2">
@@ -121,8 +140,23 @@ const handleConfirm = () => {
               typeSpeed={90}
             />
           )}
-          <div className="mt-6 text-gray-400 text-sm">
-            <p>🕓 Created: {teamData?.createdAt?.split("T")[0] || "N/A"}</p>
+          <div className="mt-6  text-gray-400 text-sm">
+           
+             <div className="flex flex-wrap gap-4">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Users className="w-4 h-4" />
+                <span>{teamData?.memberEmails.length || 0} Members</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Calendar className="w-4 h-4" />
+                <span>Founded {teamData?.createdAt?.split("T")[0] || "N/A"}</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <MapPin className="w-4 h-4" />
+                
+                <span>Global Remote</span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -139,11 +173,12 @@ const handleConfirm = () => {
           </div>
         </div>
       </section>
+      
 
       {/* ACTION BUTTONS */}
       <section className="flex flex-col md:flex-row gap-2">
         {[{ label: "Create Project", action: handleConfirm }, { label: "Join Projects", action: handleJoinNav }].map((item, i) => (
-          <div key={i} className={`w-full md:w-1/2 p-6 flex justify-between items-center rounded-xl shadow-xl border backdrop-blur-xl ${theme === "dark" ? "bg-gradient-to-r from-black to-gray-800 border-white/20" : "bg-white/10"}`}>
+          <div key={i} className={`w-full md:w-1/2 p-6 gap-4 flex transition-all duration-300 ease-in-out transform hover:-translate-y-1 hover:scale-95  bg-gradient-to-br    hover:shadow-cyan-500 justify-between items-center rounded-xl shadow-sm border backdrop-blur-xl ${theme === "dark" ? "bg-gradient-to-r from-black to-gray-800 border-white/20" : "bg-white/10"}`}>
             <div>
               <Fade>
                 <h2 className="text-lg font-semibold text-cyan-500 font-mono">
@@ -211,46 +246,59 @@ const handleConfirm = () => {
       {/* PROJECT CARDS */}
       <section className="rounded-xl p-6 shadow-xl">
         <h2 className="text-2xl font-bold text-cyan-500 mb-6 font-mono">🚀 Team Projects</h2>
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {projectData.map((p, i) => (
-            <Card
-              key={i}
-              className={`group relative overflow-hidden rounded-xl border p-4 transition-all duration-300 ${p.priority === 'High' ? 'border-red-600' : 'border-yellow-500'} hover:scale-[1.02] shadow-xl bg-transparent`}
-            >
-              <div className="absolute -bottom-10 -right-10 h-32 w-32 rounded-full bg-purple-500 opacity-10 blur-3xl transition-transform group-hover:scale-125" />
-              <CardHeader className="z-10 relative">
-                <CardTitle className="text-xl font-bold text-purple-600 group-hover:text-purple-400">
-                  🚀 {p.projectName}
-                </CardTitle>
-                <CardDescription className="mt-2 text-sm text-muted-foreground line-clamp-2">
-                  {p.description}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="z-10 relative mt-3 space-y-2 text-sm">
-                <p>👑 <span className="text-purple-400 font-medium">Admin:</span> {p.teamAdmin?.name || 'N/A'}</p>
-                <p>📋 <span className="text-cyan-400 font-medium">Manager:</span> {p.projectManager?.name || 'N/A'}</p>
-                <p>📅 <span className="text-gray-400 font-medium">Created At:</span> {p.createdAt?.split('T')[0] || 'N/A'}</p>
-                <div className="flex justify-between text-sm">
-                  <p>🟢 <span className="text-green-500 font-medium">Start:</span> {p.startAt || '—'}</p>
-                  <p>🔴 <span className="text-red-400 font-medium">End:</span> {p.endAt || '—'}</p>
-                </div>
-                <p>🫡 <span className="text-amber-700">Project Id:</span> {p.projectId}</p>
-              </CardContent>
-              <CardFooter className="relative z-10 mt-4 flex justify-end">
-                <Button
-                  onClick={() => handleNavigation(p.id)}
-                  className="rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white text-sm px-5 py-2 shadow-md"
-                >
-                  🔍 Check
-                </Button>
-              </CardFooter>
-            </Card>
-          ))}
+        <div className="flex flex-wrap gap-6 justify-center transition-all duration-500">
+  {projectData.map((p, i) => (
+    <div
+      key={i}
+      className="group relative w-full md:w-[30%] hover:scale-[0.93] transition-all duration-700 ease-in-out"
+    >
+      <Card className="relative overflow-hidden h-full  shadow-md rounded-2xl transition-all duration-500 group-hover:shadow-cyan-500/30 hover:scale-[1.01] backdrop-blur-md">
+        
+        {/* Decorative Glow Circle */}
+        <div className="absolute -top-10 -left-10 w-40 h-40 bg-cyan-400 opacity-10 rounded-full blur-3xl group-hover:scale-125 transition-transform duration-700" />
+
+        {/* Project Header */}
+        <CardHeader className="relative z-10">
+          <h3 className="text-2xl font-semibold text-cyan-400 group-hover:text-cyan-300 transition-all duration-300">
+            {p.projectName}
+          </h3>
+          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{p.description}</p>
+        </CardHeader>
+
+        {/* Project Details */}
+        <CardContent className="relative z-10 mt-3 space-y-2 text-sm text-white/80">
+          <p>👑 <span className="text-white/90 font-medium">Admin:</span> {p.teamAdmin?.name || 'N/A'}</p>
+          <p>📋 <span className="text-white/90 font-medium">Manager:</span> {p.projectManager?.name || 'N/A'}</p>
+          <div className="flex justify-between">
+            <span>🟢 <span className="text-green-400">Start:</span> {p.startAt || '—'}</span>
+            <span>🔴 <span className="text-red-400">End:</span> {p.endAt || '—'}</span>
+          </div>
+          <p className="text-xs mt-1 text-yellow-300">🪪 ID: {p.projectId}</p>
+        </CardContent>
+
+        {/* CTA Footer */}
+        <CardFooter className="relative z-10 mt-4 flex justify-end">
+          <Button
+            onClick={() => handleNavigation(p.id)}
+            className="bg-cyan-500 hover:bg-cyan-600 text-white font-semibold rounded-full px-5 py-2 shadow-lg transition-all duration-300"
+          >
+            🔍 Explore
+          </Button>
+        </CardFooter>
+
+        {/* Priority Ribbon */}
+        <div className={`absolute top-0 right-0 rounded-bl-lg px-2 py-1 text-xs font-bold text-white ${p.priority === 'High' ? 'bg-red-500' : 'bg-yellow-500'}`}>
+          {p.priority}
         </div>
+      </Card>
+    </div>
+  ))}
+</div>
+
       </section>
 
       {/* TEAM MEMBERS */}
-      <section className="rounded-xl p-6 shadow-xl dark:bg-cyan-800">
+      <section className="rounded-xl p-6 shadow-xl ">
         <h1 className="text-xl font-serif text-cyan-400 mb-4">📃 Team Members</h1>
         <Tabs defaultValue="details" className="w-full">
           <TabsList className="grid grid-cols-3 bg-muted/30">
@@ -260,18 +308,10 @@ const handleConfirm = () => {
           </TabsList>
 
           <TabsContent value="details" className="mt-4">
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {members.map((member, i) => (
-                <Card key={i} className="border-white/20 shadow-lg">
-                  <CardHeader>
-                    <CardTitle className="text-cyan-500 text-lg">{member.name}</CardTitle>
-                    <CardDescription className="text-xs text-gray-400">UID: {member.uid || "N/A"}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground">📧 {member.email}</p>
-                  </CardContent>
-                </Card>
-              ))}
+            <div className="">
+              <SpecificTeamMembers
+team={team}
+/>
             </div>
           </TabsContent>
 

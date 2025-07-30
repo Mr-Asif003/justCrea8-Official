@@ -1,6 +1,6 @@
 // components/layout/PublicLayout.jsx
 import { Outlet } from "react-router-dom"; // Outlet is used to render child routes
-import Footer from "../Footer";
+import Footer from "@/components/Footer"; // Import the Footer component
 const PublicLayout = () => {
   return (
     <div className="public-layout">

@@ -1,14 +1,9 @@
- 
-import { useState,useEffect } from "react";
+import { useState } from "react";
 import { PageTitle } from "@/components/ui/PageTitle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { db, auth } from "@/Firebase/firebaseConfig";
-import { serverTimestamp } from "firebase/firestore";
-
-
-
+import { db } from "@/Firebase/firebaseConfig";
 import {
   Card,
   CardContent,
@@ -17,39 +12,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Save, Plus, Edit, Pin, Archive, Trash2, StickyNote, Search } from "lucide-react";
+import { doc, updateDoc, arrayUnion, arrayRemove } from "firebase/firestore";
 import { toast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
-import {
-  Search,
-  Plus,
-  MoreVertical,
-  Pin,
-  Archive,
-  Trash2,
-  Edit,
-  PenLine,
-  Save,
-  StickyNote,
-} from "lucide-react";
-import {
-  collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, query, where, orderBy
-} from "firebase/firestore";
 
 // Note Types
 type NoteColor = "default" | "red" | "yellow" | "green" | "blue" | "purple";
@@ -72,8 +38,7 @@ const colorClasses: Record<NoteColor, string> = {
   purple: "bg-purple-500 dark:bg-purple-600",
 };
 
-export default function NoteProject() {
-  const [notes, setNotes] = useState<Note[]>([]);
+export default function NoteProject({ projectDetails, setProjectDetails }) {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [selectedColor, setSelectedColor] = useState<NoteColor>("default");
@@ -81,25 +46,7 @@ export default function NoteProject() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showArchived, setShowArchived] = useState(false);
 
-  const user = auth.currentUser;
-
-  useEffect(() => {
-    if (!user) return;
-    const q = query(
-      collection(db, "notes", user.uid, "userNotes"),
-      orderBy("createdAt", "desc")
-    );
-
-    const unsub = onSnapshot(q, (snapshot) => {
-      const fetchedNotes = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as Note[];
-      setNotes(fetchedNotes);
-    });
-
-    return () => unsub();
-  }, [user]);
+  const notes: Note[] = projectDetails?.notes || [];
 
   const resetForm = () => {
     setTitle("");
@@ -109,71 +56,75 @@ export default function NoteProject() {
   };
 
   const handleSaveNote = async () => {
-    if (!user || !title.trim()) {
-      toast({
-        title: "Missing Info",
-        description: "Please enter a title.",
-        variant: "destructive",
-      });
+    if (!title.trim()) {
+      toast({ title: "Missing Title", variant: "destructive" });
       return;
     }
-    const date=new Date();
 
-    const noteData = {
+    const newNote: Note = {
+      id: editingNote?.id || Date.now().toString(),
       title,
       content,
       color: selectedColor,
       pinned: editingNote?.pinned || false,
       archived: editingNote?.archived || false,
-      createdAt: `${new Date().toLocaleDateString("en-US", {
-        weekday: "long",
-        day: "numeric",
-        month: "long",
-        year: "numeric"
-      })}`,
-      createdMonth:date.getMonth(),
-
+      createdAt: new Date().toLocaleString(),
     };
 
-    try {
-      const notesRef = collection(db, "notes", user.uid, "userNotes");
+    const projectRef = doc(db, "projects", projectDetails.projectId);
 
+    try {
+      let updatedNotes;
       if (editingNote) {
-        const noteDoc = doc(notesRef, editingNote.id);
-        await updateDoc(noteDoc, noteData);
-        toast({ title: "Note Updated", description: "Your note was updated." });
+        const removed = notes.filter((n) => n.id !== editingNote.id);
+        updatedNotes = [...removed, newNote];
       } else {
-        await addDoc(notesRef, noteData);
-        toast({ title: "Note Created", description: "New note added." });
+        updatedNotes = [...notes, newNote];
       }
 
+      await updateDoc(projectRef, { notes: updatedNotes });
+
+      setProjectDetails((prev) => ({
+        ...prev,
+        notes: updatedNotes,
+      }));
+
+      toast({ title: editingNote ? "Note Updated" : "Note Added" });
       resetForm();
-    } catch (err) {
-      console.error(err);
-      toast({ title: "Error", description: "Failed to save note." });
+    } catch (error) {
+      console.error("Error saving note:", error);
+      toast({ title: "Error", description: "Could not save note", variant: "destructive" });
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!user) return;
+    const updatedNotes = notes.filter((n) => n.id !== id);
     try {
-      await deleteDoc(doc(db, "notes", user.uid, "userNotes", id));
-      toast({ title: "Deleted", description: "Note deleted." });
+      await updateDoc(doc(db, "projects", projectDetails.projectId), { notes: updatedNotes });
+      setProjectDetails((prev) => ({
+        ...prev,
+        notes: updatedNotes,
+      }));
+      toast({ title: "Deleted", description: "Note removed." });
     } catch (err) {
       console.error(err);
     }
   };
 
   const togglePin = async (note: Note) => {
-    if (!user) return;
-    const ref = doc(db, "notes", user.uid, "userNotes", note.id);
-    await updateDoc(ref, { pinned: !note.pinned });
+    const updated = notes.map((n) =>
+      n.id === note.id ? { ...n, pinned: !n.pinned } : n
+    );
+    await updateDoc(doc(db, "projects", projectDetails.projectId), { notes: updated });
+    setProjectDetails((prev) => ({ ...prev, notes: updated }));
   };
 
   const toggleArchive = async (note: Note) => {
-    if (!user) return;
-    const ref = doc(db, "notes", user.uid, "userNotes", note.id);
-    await updateDoc(ref, { archived: !note.archived });
+    const updated = notes.map((n) =>
+      n.id === note.id ? { ...n, archived: !n.archived } : n
+    );
+    await updateDoc(doc(db, "projects", projectDetails.projectId), { notes: updated });
+    setProjectDetails((prev) => ({ ...prev, notes: updated }));
   };
 
   const filtered = notes
@@ -190,19 +141,19 @@ export default function NoteProject() {
   return (
     <div className="animate-fade-in">
       <div className="flex justify-between items-center mb-6">
-        <PageTitle title="Notes" description="Your personal note-taking app" />
+        <PageTitle title="Notes" description="Notes related to this project" />
         <Button onClick={resetForm} disabled={!editingNote}>
           <Plus className="h-4 w-4 mr-2" /> New Note
         </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Note Form */}
+        {/* Form */}
         <Card className="md:col-span-1 sticky top-6">
           <CardHeader>
             <CardTitle>{editingNote ? "Edit Note" : "Create Note"}</CardTitle>
             <CardDescription>
-              {editingNote ? "Update your note" : "Add something new"}
+              {editingNote ? "Update your note" : "Add a new note"}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -247,7 +198,7 @@ export default function NoteProject() {
           </CardFooter>
         </Card>
 
-        {/* Notes Display */}
+        {/* Display Notes */}
         <div className="md:col-span-2 space-y-6">
           <div className="flex items-center gap-4">
             <div className="relative flex-1">
@@ -270,10 +221,24 @@ export default function NoteProject() {
           {filtered.length > 0 ? (
             <>
               {pinned.length > 0 && (
-                <NoteSection title="Pinned" notes={pinned} onEdit={setEditingNote} onPin={togglePin} onArchive={toggleArchive} onDelete={handleDelete} />
+                <NoteSection
+                  title="Pinned"
+                  notes={pinned}
+                  onEdit={setEditingNote}
+                  onPin={togglePin}
+                  onArchive={toggleArchive}
+                  onDelete={handleDelete}
+                />
               )}
               {unpinned.length > 0 && (
-                <NoteSection title={pinned.length > 0 ? "Others" : ""} notes={unpinned} onEdit={setEditingNote} onPin={togglePin} onArchive={toggleArchive} onDelete={handleDelete} />
+                <NoteSection
+                  title={pinned.length > 0 ? "Others" : ""}
+                  notes={unpinned}
+                  onEdit={setEditingNote}
+                  onPin={togglePin}
+                  onArchive={toggleArchive}
+                  onDelete={handleDelete}
+                />
               )}
             </>
           ) : (
@@ -289,14 +254,13 @@ export default function NoteProject() {
   );
 }
 
-// Helper Component
 function NoteSection({ title, notes, onEdit, onPin, onArchive, onDelete }) {
   return (
     <div>
       {title && <h3 className="text-sm font-semibold text-muted-foreground mb-2">{title}</h3>}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         {notes.map((note) => (
-          <Card key={note.id} className={`${cn(colorClasses[note.color])} `} >
+          <Card key={note.id} className={cn(colorClasses[note.color])}>
             <CardHeader>
               <div className="flex justify-between items-start">
                 <div>

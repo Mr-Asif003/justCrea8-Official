@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Projector,Group,WorkflowIcon,LayoutDashboard ,NotebookPenIcon,LucideWorkflow,PercentDiamondIcon,TreePalm, Rotate3D} from 'lucide-react';
+
 export default function ProjectSpecificLayout() {
   const location = useLocation();
   const { theme } = useTheme();
@@ -37,9 +38,9 @@ export default function ProjectSpecificLayout() {
           </div>
 
           {/* Navigation Bar */}
-          <div className={`w-full backdrop-blur-xl bg-white/10 border border-white/30 shadow-2xl p-4 flex flex-wrap gap-4 items-center rounded ${theme === 'dark' ? 'bg-gradient-to-r from-black to-gray-800' : ''}`}>
+          {/* <div className={`w-full backdrop-blur-xl bg-white/10 border border-white/30 shadow-2xl p-4 flex flex-wrap gap-4 items-center rounded ${theme === 'dark' ? 'bg-gradient-to-r from-black to-gray-800' : ''}`}>
             <NavLink to="" end className={navLinkStyle} ><div className='flex items-center justify-center gap-2'><p>Project</p>  <Projector size={13}/></div></NavLink>
-            {/* <NavLink to="workspace" className={navLinkStyle}><div className='flex items-center justify-center gap-2'><p>WorkSpace</p>  <WorkflowIcon size={13}/></div></NavLink> */}
+            <NavLink to="workspace" className={navLinkStyle}><div className='flex items-center justify-center gap-2'><p>WorkSpace</p>  <WorkflowIcon size={13}/></div></NavLink>
                        <NavLink to="chat" className={navLinkStyle}><div className='flex items-center justify-center gap-2'><p>Chats</p>  <TreePalm size={15}/></div></NavLink>
                           <NavLink to="poll" className={navLinkStyle}><div className='flex items-center justify-center gap-2'><p>Decision Box</p>  <LayoutDashboard size={13}/></div></NavLink>
 
@@ -48,12 +49,11 @@ export default function ProjectSpecificLayout() {
             <NavLink to="team" className={navLinkStyle}><div className='flex items-center justify-center gap-2'><p>Teams</p>  <Group size={13}/></div></NavLink>
             <NavLink to="todos" className={navLinkStyle}><div className='flex items-center justify-center gap-2'><p>Todos</p>  <Group size={13}/></div></NavLink>
             <NavLink to="notes" className={navLinkStyle}><div className='flex items-center justify-center gap-2'><p>Notes</p>  <Group size={13}/></div></NavLink>
-
+            <NavLink to="kanban" className={navLinkStyle}><div className='flex items-center justify-center gap-2'><p>Kanban</p>  <LucideWorkflow size={13}/></div></NavLink>
             <NavLink to="tasks" className={navLinkStyle}><div className='flex items-center justify-center gap-2'><p>Tasks</p>  <WorkflowIcon size={13}/></div></NavLink>
-           <NavLink to="roadmap" className={navLinkStyle}><div className='flex items-center justify-center gap-2'><p>RoadMap</p> <Rotate3D size={13}/></div></NavLink>
            <NavLink to="linktree" className={navLinkStyle}><div className='flex items-center justify-center gap-2'><p>LinkTree</p>  <TreePalm size={15}/></div></NavLink>
-
-          </div>
+           <NavLink to="group-discussion" className={navLinkStyle}><div className='flex items-center justify-center gap-2'><p>Group Discussion</p>  <TreePalm size={15}/></div></NavLink>
+          </div> */}
         </section>
       </header>
 

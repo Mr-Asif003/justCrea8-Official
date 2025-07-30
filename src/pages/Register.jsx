@@ -8,6 +8,7 @@ import {
   deleteUser
 } from "firebase/auth";
 import heroImgbg from "@/assets/images/heroImg4.jpg";
+import { Button } from "react-day-picker";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -76,6 +77,10 @@ export default function Register() {
       alert("Error: " + err.message);
     }
   };
+  const handleClose = () => {
+    setShowModal(false);
+    navigate("/home");
+  };
 
   return (
     <div className="relative z-50">
@@ -94,9 +99,9 @@ export default function Register() {
               <h2 className="text-2xl font-bold text-purple-600 dark:text-purple-400">
                 Create an Account
               </h2>
-              <Link to="/home" className="text-lg font-semibold hover:text-red-500">
+              <button onClick={handleClose} className="text-lg font-semibold hover:text-red-500">
                 ✕
-              </Link>
+              </button>
             </div>
 
             <form onSubmit={handleRegister} className="space-y-4">

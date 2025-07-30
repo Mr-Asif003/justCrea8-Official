@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+"use client";
+
+import React, { useEffect, useState } from "react";
 import {
   Grid,
   Card,
@@ -6,175 +8,203 @@ import {
   Typography,
   Avatar,
   IconButton,
-  TextField,
   Button,
   Box,
   Stack,
-  Select,
-  MenuItem,
-  Collapse
-} from '@mui/material';
+  Collapse,
+  TextField,
+} from "@mui/material";
+import { Input } from "@/components/ui/input";
 import {
   Add as AddIcon,
   Delete as DeleteIcon,
   Edit as EditIcon,
   Save as SaveIcon,
   Cancel as CancelIcon,
-  ExpandMore as ExpandMoreIcon
-} from '@mui/icons-material';
+  ExpandMore as ExpandMoreIcon,
+} from "@mui/icons-material";
+import { toast } from "sonner";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { db } from "@/Firebase/firebaseConfig";
+import { auth } from "@/Firebase/firebaseConfig";
 
-import { toast } from "sonner"
-const roleColors = {
-  Admin: 'green',
-  PM: '#1976d2',
-  Contributor: '#388e3c',
-  Mentor: '#fbc02d',
+// Define role colors
+const roleColors: Record<string, string> = {
+  Admin: "green",
+  PM: "#1976d2",
+  Contributor: "#388e3c",
+  Mentor: "#fbc02d",
 };
 
-const initialLinks = [
-  {
-    id: 1,
-    label: 'Portfolio',
-    url: 'https://yourportfolio.com',
-    role: 'Admin',
-  },
-  {
-    id: 2,
-    label: 'GitHub',
-    url: 'https://github.com/asifkhan',
-    role: 'Contributor',
-  },
-  {
-    id: 3,
-    label: 'LinkedIn',
-    url: 'https://linkedin.com/in/asifkhan',
-    role: 'Mentor',
-  },
-  {
-    id: 4,
-    label: 'Blog',
-    url: 'https://yourblog.com',
-    role: 'PM',
-  },
-];
+// Types
+type LinkItem = {
+  id: number;
+  label: string;
+  url: string;
+  role: string;
+};
 
-export default function LinkTreeCardGrid() {
-  const [links, setLinks] = useState(initialLinks);
-  const [expandedId, setExpandedId] = useState(null);
-  const [editingId, setEditingId] = useState(null);
-  const [editValues, setEditValues] = useState({});
-  const [newLink, setNewLink] = useState({ label: '', url: '', role: 'Contributor' });
+type Props = {
+  projectDetails;
+};
 
-  const handleAdd = () => {
-    if (!newLink.label || !newLink.url) return;
-    setLinks([
-      ...links,
-      {
-        ...newLink,
-        id: Date.now(),
-      },
-    ]);
-    toast("Event has been created.")
-    setNewLink({ label: '', url: '', role: 'Contributor' });
+export default function LinkTreeCardGrid({ projectDetails }: Props) {
+  const [links, setLinks] = useState<LinkItem[]>([]);
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editValues, setEditValues] = useState<Partial<LinkItem>>({});
+  const [newLink, setNewLink] = useState<Omit<LinkItem, "id" | "role">>({
+    label: "",
+    url: "",
+  });
+
+  const projectRef = doc(db, "projects", projectDetails.projectId);
+
+  // Load existing links
+  useEffect(() => {
+    const fetchLinks = async () => {
+      try {
+        const docSnap = await getDoc(projectRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setLinks(data.links || []);
+        }
+      } catch (err) {
+        console.error("Error fetching links", err);
+      }
+    };
+
+    fetchLinks();
+  }, [projectRef]);
+
+  const saveLinksToFirestore = async (updatedLinks: LinkItem[]) => {
+    try {
+      await updateDoc(projectRef, { links: updatedLinks });
+      toast.success("Links updated");
+    } catch (err) {
+      toast.error("Failed to update links");
+      console.error(err);
+    }
   };
 
-  const handleDelete = (id) => setLinks(links.filter((link) => link.id !== id));
+  const handleAdd = async () => {
+    if (!newLink.label || !newLink.url) return;
 
-  const startEdit = (link) => {
+    const currentUser = auth.currentUser;
+    const role = currentUser?.displayName || "Contributor";
+
+    const newItem: LinkItem = {
+      ...newLink,
+      id: Date.now(),
+      role,
+    };
+
+    const updatedLinks = [...links, newItem];
+    setLinks(updatedLinks);
+    setNewLink({ label: "", url: "" });
+    await saveLinksToFirestore(updatedLinks);
+  };
+
+  const handleDelete = async (id: number) => {
+    const updatedLinks = links.filter((link) => link.id !== id);
+    setLinks(updatedLinks);
+    await saveLinksToFirestore(updatedLinks);
+  };
+
+  const startEdit = (link: LinkItem) => {
     setEditingId(link.id);
     setEditValues({ label: link.label, url: link.url });
   };
 
-  const handleEditSave = (id) => {
-    setLinks(links.map((link) => (link.id === id ? { ...link, ...editValues } : link)));
+  const handleEditSave = async (id: number) => {
+    const updatedLinks = links.map((link) =>
+      link.id === id ? { ...link, ...editValues } : link
+    );
+    setLinks(updatedLinks);
     setEditingId(null);
+    await saveLinksToFirestore(updatedLinks);
   };
 
-  const toggleExpand = (id) => {
-    setExpandedId(expandedId === id ? null : id);
-  };
+  const toggleExpand = (id: number) =>
+    setExpandedId((prev) => (prev === id ? null : id));
 
   return (
     <Box sx={{ p: 4 }}>
-      <Typography variant="h4" gutterBottom sx={{ color: 'green.400' }}>
+      <Typography variant="h4" gutterBottom sx={{ color: "cyan.400" }}>
         🌿 LinkTree Dashboard
       </Typography>
 
-      {/* New Link Form */}
+      {/* New Link Inputs */}
       <Box
         sx={{
-          display: 'flex',
+          display: "flex",
           gap: 2,
           mb: 4,
-          flexWrap: 'wrap',
-          background: 'rgba(0,255,255,0.05)',
+          flexWrap: "wrap",
           p: 2,
           borderRadius: 2,
-          border: '1px solid green',
+          border: "1px solid cyan",
         }}
       >
-        <TextField
-          label="Label"
-          variant="outlined"
+        <Input
+          placeholder="Enter Title"
           value={newLink.label}
           onChange={(e) => setNewLink({ ...newLink, label: e.target.value })}
-          InputProps={{ sx: { color: 'cyan' } }}
-          InputLabelProps={{ sx: { color: 'cyan' } }}
         />
-        <TextField
-          label="URL"
-          variant="outlined"
+        <Input
+          placeholder="Enter URL"
           value={newLink.url}
           onChange={(e) => setNewLink({ ...newLink, url: e.target.value })}
-          InputProps={{ sx: { color: 'cyan' } }}
-          InputLabelProps={{ sx: { color: 'cyan' } }}
         />
-        <Select
-          value={newLink.role}
-          onChange={(e) => setNewLink({ ...newLink, role: e.target.value })}
-          displayEmpty
-          sx={{ color: 'cyan' }}
+        <Button
+          variant="contained"
+          color="success"
+          startIcon={<AddIcon />}
+          onClick={handleAdd}
         >
-          {Object.keys(roleColors).map((role) => (
-            <MenuItem value={role} key={role}>
-              {role}
-            </MenuItem>
-          ))}
-        </Select>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={handleAdd}>
-          Add Link
+          Add
         </Button>
       </Box>
 
-      {/* Card Grid */}
-      <Grid container  spacing={2} direction='row' alignItems='center' justifyContent='center'>
+      {/* Grid of Cards */}
+      <Grid container spacing={3}>
         {links.map((link) => {
           const isEditing = editingId === link.id;
-
           return (
-            <Grid item xs={12} sm={6} md={4} xl={4} key={link.id}>
+            <Grid item xs={12} sm={6} md={4} key={link.id}>
               <Card
                 sx={{
-                  minHeight: 200,
-                  border: '2px solid green',
+                  minHeight: 220,
+                  border: `2px solid ${roleColors[link.role] || "cyan"}`,
                   borderRadius: 3,
-                  bgcolor: 'rgba(0, 255, 255, 0.1)',
-                  transition: 'all 0.3s ease',
-                  '&:hover': {
-                    boxShadow: '0 6px 16px rgba(0,255,255,0.3)',
+                  backgroundColor: "transparent",
+                  "&:hover": {
+                    boxShadow: `0 6px 16px ${roleColors[link.role] || "cyan"}55`,
                   },
                 }}
               >
                 <CardContent>
-                  <Stack direction="row" justifyContent="space-between" alignItems="center">
-                    <Avatar sx={{ bgcolor: roleColors[link.role] }}>{link.label[0]}</Avatar>
+                  <Stack
+                    direction="row"
+                    justifyContent="space-between"
+                    alignItems="center"
+                  >
+                    <Avatar sx={{ bgcolor: roleColors[link.role] || "cyan" }}>
+                      {link.label[0]}
+                    </Avatar>
                     <Stack direction="row" spacing={1}>
                       {isEditing ? (
                         <>
-                          <IconButton onClick={() => handleEditSave(link.id)} color="success">
+                          <IconButton
+                            onClick={() => handleEditSave(link.id)}
+                            color="success"
+                          >
                             <SaveIcon />
                           </IconButton>
-                          <IconButton onClick={() => setEditingId(null)} color="error">
+                          <IconButton
+                            onClick={() => setEditingId(null)}
+                            color="error"
+                          >
                             <CancelIcon />
                           </IconButton>
                         </>
@@ -183,7 +213,10 @@ export default function LinkTreeCardGrid() {
                           <IconButton onClick={() => startEdit(link)}>
                             <EditIcon />
                           </IconButton>
-                          <IconButton onClick={() => handleDelete(link.id)} color="error">
+                          <IconButton
+                            onClick={() => handleDelete(link.id)}
+                            color="error"
+                          >
                             <DeleteIcon />
                           </IconButton>
                         </>
@@ -202,34 +235,46 @@ export default function LinkTreeCardGrid() {
                           fullWidth
                           value={editValues.label}
                           onChange={(e) =>
-                            setEditValues((prev) => ({ ...prev, label: e.target.value }))
+                            setEditValues((prev) => ({
+                              ...prev,
+                              label: e.target.value,
+                            }))
                           }
                           sx={{ mb: 1 }}
-                          InputProps={{ sx: { color: 'white' } }}
-                          InputLabelProps={{ sx: { color: 'white' } }}
                         />
                         <TextField
                           label="URL"
                           fullWidth
                           value={editValues.url}
                           onChange={(e) =>
-                            setEditValues((prev) => ({ ...prev, url: e.target.value }))
+                            setEditValues((prev) => ({
+                              ...prev,
+                              url: e.target.value,
+                            }))
                           }
-                          InputProps={{ sx: { color: 'white' } }}
-                          InputLabelProps={{ sx: { color: 'white' } }}
                         />
                       </>
                     ) : (
                       <>
-                        <Typography variant="h5" sx={{ color: 'white' }}>
+                        <Typography
+                          variant="h6"
+                          sx={{ color: "white", wordBreak: "break-word" }}
+                        >
                           {link.label}
                         </Typography>
-                        <Typography variant="body2" sx={{ color: '#00bcd4', wordBreak: 'break-word' }}>
-                          <a className='cursor-pointer' href={link.url} target="_blank" rel="noopener noreferrer">
+                        <Typography
+                          variant="body2"
+                          sx={{ color: "#00bcd4", wordBreak: "break-word" }}
+                        >
+                          <a
+                            href={link.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
                             {link.url}
                           </a>
                         </Typography>
-                        <Typography variant="caption" sx={{ color: 'white' }}>
+                        <Typography variant="caption" sx={{ color: "white" }}>
                           Role: {link.role}
                         </Typography>
                       </>
@@ -239,7 +284,7 @@ export default function LinkTreeCardGrid() {
                   <Collapse in={expandedId === link.id}>
                     <Box mt={2}>
                       <Typography variant="body2" color="text.secondary">
-                        📌 Future child links or details can go here.
+                        📌 Future child links or metadata go here.
                       </Typography>
                     </Box>
                   </Collapse>

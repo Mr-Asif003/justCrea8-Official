@@ -1,11 +1,20 @@
-
 import { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
+import { auth, db } from "@/Firebase/firebaseConfig";
+import {
+  getDoc,
+  updateDoc,
+  doc,
+  arrayUnion,
+} from "firebase/firestore";
+
 import { PageTitle } from "@/components/ui/PageTitle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { auth } from "@/Firebase/firebaseConfig";
-import { db } from "@/Firebase/firebaseConfig";
-import { getDoc, setDoc, collection, onSnapshot,updateDoc, addDoc, deleteDoc, doc, query, orderBy } from "firebase/firestore";
+import { toast } from "@/components/ui/use-toast";
+import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+
 
 import {
   Card,
@@ -14,15 +23,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+
 import {
   Select,
   SelectContent,
   SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
 import {
   Dialog,
   DialogContent,
@@ -31,30 +41,26 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
+
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
+
 import { Checkbox } from "@/components/ui/checkbox";
-import { toast } from "@/components/ui/use-toast";
-import { cn } from "@/lib/utils";
 import {
   Plus,
   Calendar,
   Trash2,
   Check,
   Clock,
-  ChevronDown,
   Filter,
   Flag,
   CheckSquare,
   Tag,
-  AlertCircle,
 } from "lucide-react";
-import { todo } from "node:test";
 
 interface Todo {
   id: string;
@@ -68,37 +74,33 @@ interface Todo {
   endTime: string | null;
   startTimeMeridian: string;
   endTimeMeridian: string;
+  createdMonth: number;
+  createdDate: number;
 }
 
-export default function TodoProject() {
-  const [todos, setTodos] = useState([
-
-  ]);
-
+export default function TodoProject({ projectDetails }: { projectDetails: any }) {
+  const { projectId } = useParams();
+  const [projectDetail, setProjectDetail] = useState(projectDetails);
+  const [todos, setTodos] = useState<Todo[]>(projectDetails?.todo || []);
   const [newTodo, setNewTodo] = useState("");
   const [selectedPriority, setSelectedPriority] = useState<"low" | "medium" | "high">("medium");
   const [selectedCategory, setSelectedCategory] = useState("Personal");
-  const [selectedDueDate, setSelectedDueDate] = useState<string>("");
-  const [todoToDelete, setTodoToDelete] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("all");
-  const [categories, setCategories] = useState([
-    "Personal", "Work", "Health", "Shopping", "Learning"
-  ]);
   const [newCategoryDialog, setNewCategoryDialog] = useState(false);
   const [newCategory, setNewCategory] = useState("");
+  const [todoToDelete, setTodoToDelete] = useState<string | null>(null);
+
+  // Timer input state
   const [timerForm, setTimerForm] = useState(false);
   const [taskStartDate, setTaskStartDate] = useState("");
   const [taskStartTime, setTaskStartTime] = useState('');
   const [taskEndTime, setTaskEndTime] = useState('');
-  const [taskEndDate, setTaskEndDate] = useState('')
+  const [taskEndDate, setTaskEndDate] = useState('');
   const [taskEndTimeMeridian, setTaskEndTimeMeridian] = useState('');
   const [taskStartTimeMeridian, setTaskStartTimeMeridian] = useState('');
-  
-    const now = new Date();
-    const currentHour = now.getHours();
-    
 
-
+  const now = new Date();
+  const categories = ["Personal", "Work", "Health", "Shopping", "Learning"];
 
   const priorityStyles = {
     low: { badge: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400", icon: "text-green-500" },
@@ -107,40 +109,24 @@ export default function TodoProject() {
   };
 
   useEffect(() => {
-    const user = auth.currentUser;
-    if (!user) return;
-
-    const todosRef = collection(db, 'todos', user.uid, 'userTodos');
-    const q = query(todosRef, orderBy('startDate', 'desc')); // Optional: order by startDate descending
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const todosData = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setTodos(todosData);
-    });
-
-    return () => unsubscribe(); // Clean up the listener on unmount
-  }, []);
-
+    setProjectDetail(projectDetails);
+    setTodos(projectDetails?.todo || []);
+  }, [projectDetails]);
 
   const addTodo = async () => {
-    const user = auth.currentUser
     if (!newTodo.trim()) {
-
       toast({
         title: "Task Required",
-        description: "Please enter a task description.",
+        description: "Please enter a task title.",
         variant: "destructive",
       });
       return;
     }
-    const todoId = Date.now().toString();
-    const date=new Date();
-    const todo = {
-      id: todoId,
-      title: newTodo,
+
+    const date = new Date();
+    const todo: Todo = {
+      id: `${Date.now()}`,
+      title: newTodo.trim(),
       completed: false,
       priority: selectedPriority,
       category: selectedCategory,
@@ -148,520 +134,274 @@ export default function TodoProject() {
       endDate: taskEndDate,
       startTime: taskStartTime,
       endTime: taskEndTime,
-      createdMonth:date.getMonth(),
-      createdDate:date.getDate(),
-    
+      startTimeMeridian: taskStartTimeMeridian,
+      endTimeMeridian: taskEndTimeMeridian,
+      createdMonth: date.getMonth(),
+      createdDate: date.getDate(),
     };
+
     try {
-      const todoRef = doc(db, 'todos', user.uid, 'userTodos', todoId);
-      await setDoc(todoRef, todo); // 👈 setDoc with custom ID
-      setTodos([todo, ...todos]);
-      console.log(todos)
-      setNewTodo("");
-      toast({
-        title: "Task Added",
-        description: "Your task has been added successfully.",
+      const projectRef = doc(db, "projects", projectId as string);
+      await updateDoc(projectRef, {
+        todo: arrayUnion(todo),
       });
-    } catch (e) {
-      alert(e.message);
+
+      setTodos((prev) => [todo, ...prev]);
+      setNewTodo("");
+      toast({ title: "Task Added", description: "Todo added to project." });
+    } catch (error) {
+      console.error("Error adding todo:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add task.",
+        variant: "destructive",
+      });
     }
   };
 
-  const toggleComplete = (id: string) => {
-    const user = auth.currentUser;
-    if (!user) {
+  const toggleComplete = async (id: string) => {
+    const updatedTodos = todos.map((todo) =>
+      todo.id === id ? { ...todo, completed: !todo.completed } : todo
+    );
+    setTodos(updatedTodos);
+
+    try {
+      const projectRef = doc(db, "projects", projectId as string);
+      await updateDoc(projectRef, { todo: updatedTodos });
+    } catch (error) {
       toast({
-        title: "Not Authorized",
-        description: "Please log in to update tasks.",
+        title: "Error",
+        description: "Failed to update task status.",
         variant: "destructive",
       });
-      return;
     }
-  
-    setTodos(
-      todos.map((todo) => {
-        if (todo.id === id) {
-          const updatedTodo = { ...todo, completed: !todo.completed };
-          
-          if (updatedTodo.completed) {
-            toast({
-              title: "Task Completed",
-              description: "Great job! Task marked as complete.",
-            });
-          }
-  
-          // Update Firestore
-          const todoRef = doc(db, "todos", user.uid, "userTodos", id); // Reference the specific todo for the user
-          updateDoc(todoRef, {
-            completed: updatedTodo.completed,
-          })
-          .then(() => {
-            console.log("Todo updated in Firestore!");
-          })
-          .catch((error) => {
-            console.error("Error updating todo in Firestore: ", error);
-          });
-  
-          return updatedTodo;
-        }
-        return todo;
-      })
-    );
   };
 
   const deleteTodo = async (id: string) => {
-    const user = auth.currentUser;
-    if (!user) {
+    const updatedTodos = todos.filter((todo) => todo.id !== id);
+    setTodos(updatedTodos);
+    setTodoToDelete(null);
+
+    try {
+      const projectRef = doc(db, "projects", projectId as string);
+      await updateDoc(projectRef, { todo: updatedTodos });
+
       toast({
-        title: "Not Logged In",
-        description: "Please log in to delete tasks.",
+        title: "Deleted",
+        description: "Task removed successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete task.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const addCategory = () => {
+    if (!newCategory.trim()) {
+      toast({
+        title: "Invalid",
+        description: "Category cannot be empty.",
         variant: "destructive",
       });
       return;
     }
-
-    try {
-      const todoRef = doc(db, 'todos', user.uid, 'userTodos', id);
-      await deleteDoc(todoRef);
-
-      setTodos(prevTodos => prevTodos.filter(todo => todo.id !== id));
-      setTodoToDelete(null);
-
+    if (categories.includes(newCategory.trim())) {
       toast({
-        title: "Task Deleted",
-        description: "The task was deleted successfully.",
-      });
-    } catch (error: any) {
-      console.error("Error deleting task:", error.message);
-
-      toast({
-        title: "Deletion Failed",
-        description: "An error occurred while deleting the task. Please try again.",
+        title: "Duplicate",
+        description: "Category already exists.",
         variant: "destructive",
       });
+      return;
     }
+    categories.push(newCategory.trim());
+    setSelectedCategory(newCategory.trim());
+    setNewCategory("");
+    setNewCategoryDialog(false);
   };
 
-
-
-  const addCategory = () => {
-    if (newCategory && !categories.includes(newCategory)) {
-      setCategories([...categories, newCategory]);
-      setSelectedCategory(newCategory);
-      setNewCategory("");
-      setNewCategoryDialog(false);
-      toast({
-        title: "Category Added",
-        description: `New category "${newCategory}" has been added.`,
-      });
-    } else {
-      toast({
-        title: "Invalid Category",
-        description: "This category already exists or is invalid.",
-        variant: "destructive",
-      });
+  const filteredTodos = todos.filter((todo) => {
+    const todayDate = new Date().toISOString().split("T")[0];
+    switch (activeTab) {
+      case "today":
+        return todo.endDate === todayDate;
+      case "upcoming":
+        return todo.endDate && new Date(todo.endDate) > new Date() && !todo.completed;
+      case "completed":
+        return todo.completed;
+      default:
+        return true;
     }
-  };
+  });
 
-  let filteredTodos = todos;
-
-  switch (activeTab) {
-    case "today":
-      const today = new Date().toISOString().split("T")[0];
-      filteredTodos = todos.filter(todo => todo.endDate === today);
-      break;
-    case "upcoming":
-      const todayTimestamp = new Date().setHours(0, 0, 0, 0);
-      filteredTodos = todos.filter(todo => {
-        if (!todo.endDate) return false;
-        const dueDate = new Date(todo.endDate).setHours(0, 0, 0, 0);
-        return dueDate > todayTimestamp && !todo.completed;
-      });
-      break;
-    case "completed":
-      filteredTodos = todos.filter(todo => todo.completed);
-      break;
-    case "all":
-    default:
-      // All todos, already set
-      break;
-  }
-
-  // Group by category
   const todosByCategory: Record<string, Todo[]> = {};
-  filteredTodos.forEach(todo => {
-    if (!todosByCategory[todo.category]) {
-      todosByCategory[todo.category] = [];
-    }
+  filteredTodos.forEach((todo) => {
+    if (!todosByCategory[todo.category]) todosByCategory[todo.category] = [];
     todosByCategory[todo.category].push(todo);
   });
 
   return (
-    <div className="animate-fade-in mt-4">
+    <div className="mt-4 flex flex-col gap-4 md:flex-row">
+      <div className="w-full mb-4 md:w-1/3">
       <PageTitle
         title="Project Todo List"
         description="Organize your tasks and stay productive."
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Create New Todo */}
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle>Add New Task</CardTitle>
-            <CardDescription>
-              Create a new task with details and priority
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div>
-                <Input
-                  placeholder="What needs to be done?"
-                  value={newTodo}
-                  onChange={(e) => setNewTodo(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      addTodo();
-                    }
-                  }}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm font-medium mb-1.5">Priority</p>
-                  <Select
-                    value={selectedPriority}
-                    onValueChange={(value) =>
-                      setSelectedPriority(value as "low" | "medium" | "high")
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select priority" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectItem value="low" className="flex items-center">
-                          <div className="flex items-center">
-                            <Flag className="h-3.5 w-3.5 text-green-500 mr-2" />
-                            Low
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="medium">
-                          <div className="flex items-center">
-                            <Flag className="h-3.5 w-3.5 text-yellow-500 mr-2" />
-                            Medium
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="high">
-                          <div className="flex items-center">
-                            <Flag className="h-3.5 w-3.5 text-red-500 mr-2" />
-                            High
-                          </div>
-                        </SelectItem>
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <p className="text-sm font-medium mb-1.5">Category</p>
-                  <Select
-                    value={selectedCategory}
-                    onValueChange={setSelectedCategory}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        {categories.map((category) => (
-                          <SelectItem key={category} value={category}>
-                            {category}
-                          </SelectItem>
-                        ))}
-                        <SelectItem value="_new" className="text-primary">
-                          + Add New Category
-                        </SelectItem>
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+      {/* Add Todo */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Add New Task</CardTitle>
+          <CardDescription>With priority and schedule</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Input
+            placeholder="Enter your task"
+            value={newTodo}
+            onChange={(e) => setNewTodo(e.target.value)}
+          />
 
-              <Button onClick={() => setTimerForm(true)} className={`p-2 bg-tranparent outline-1 hover:bg-cyan-800 ${timerForm ? "hidden" : ""}`}>
-                <Check className="h-4 w-4 mr-1" /> Add
-                <Clock />
-              </Button>
-              {timerForm && (
+          {/* Selects */}
+          <div className="grid grid-cols-2 gap-4">
+            <Select value={selectedPriority} onValueChange={(value) => setSelectedPriority(value as any)}>
+              <SelectTrigger><SelectValue placeholder="Priority" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="low">Low</SelectItem>
+                <SelectItem value="medium">Medium</SelectItem>
+                <SelectItem value="high">High</SelectItem>
+              </SelectContent>
+            </Select>
 
-                <div>
-
-                  <label className="text-sm font-medium mb-3">Start Date</label>
-                  <Input
-                    type='date'
-                    placeholder="enter start date"
-                    value={taskStartDate}
-                    onChange={(e) => setTaskStartDate(e.target.value)}
-                    className="mb-3 mt-2"
-                  />
-
-                  <label className="text-sm font-medium mb-1.5">Start Time</label>
-                  <div className="flex items-center mb-3 mt-2 ">
-
-                    <Input
-                      type='time'
-                      placeholder="enter start time"
-                      value={taskStartTime}
-                      className="w-2/3"
-                      onChange={(e) => setTaskStartTime(e.target.value)}
-
-                    />
-
-                    <select className="ml-4 h-10 bg-transparent" value={taskStartTimeMeridian} onChange={(e) => { setTaskStartTimeMeridian(e.target.value) }} >
-                      <option>am</option>
-                      <option>pm</option>
-                    </select>
-                  </div>
-
-
-                  <div className="mb-3 mt-2">
-                    <p className="text-sm font-medium mb-1.5">Due Date (Optional)</p>
-                    <Input
-                      type="date"
-                      value={taskEndDate}
-                      onChange={(e) => setTaskEndDate(e.target.value)}
-                      min={new Date().toISOString().split("T")[0]}
-                    />
-                  </div>
-                  <label className="text-sm font-medium mb-1.5">End Time</label>
-                  <div className="flex items-center mb-3 mt-2 ">
-
-                    <Input
-                      type='time'
-                      placeholder="enter start time"
-                      value={taskEndTime}
-                      className="w-2/3"
-                      onChange={(e) => setTaskEndTime(e.target.value)}
-
-                    />
-
-                    <select className="ml-4 h-10 bg-transparent  " value={taskEndTimeMeridian} onChange={(e) => setTaskEndTimeMeridian(e.target.value)} >
-                      <option>am</option>
-                      <option>pm</option>
-                    </select>
-                  </div>
-
-
-                  <Button className="bg-cyan-700" onClick={() => setTimerForm(!timerForm)}>
-                    close <Clock />
-                  </Button>
-                </div>
-
-
-              )}
-
-              <Button onClick={addTodo} className="w-full bg-cyan-400 hover:bg-cyan-800">
-                <Plus className="h-4 w-4 mr-2" /> Add Task
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Todo List */}
-        <Card className="lg:col-span-2">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle>Your Tasks</CardTitle>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" className="gap-1">
-                  <Filter className="h-4 w-4" />
-                  Filter
-                </Button>
-              </div>
-            </div>
-            <Tabs
-              defaultValue="all"
-              value={activeTab}
-              onValueChange={setActiveTab}
-              className="w-full"
+            <Select
+              value={selectedCategory}
+              onValueChange={(value) => {
+                if (value === "_new") setNewCategoryDialog(true);
+                else setSelectedCategory(value);
+              }}
             >
-              <TabsList className="grid grid-cols-4">
-                <TabsTrigger value="all">All</TabsTrigger>
-                <TabsTrigger value="today">Today</TabsTrigger>
-                <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
-                <TabsTrigger value="completed">Completed</TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </CardHeader>
-          <CardContent>
-            {filteredTodos.length > 0 ? (
-              <div className="space-y-6">
-                {Object.entries(todosByCategory).map(([category, todos]) => (
-                  <div key={category}>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center">
-                      <Tag className="h-3.5 w-3.5 mr-2" /> {category}
-                    </h3>
-                    <div className="space-y-2">
-                      {todos.map((todo) => (
-                        <div
-                          key={todo.id}
-                          className={cn(
-                            "flex items-center gap-3 border rounded-lg p-3 transition-all",
-                            todo.completed
-                              ? "bg-muted/50 text-muted-foreground"
-                              : ""
-                          )}
-                        >
-                          <Checkbox
-                            checked={todo.completed}
-                            onCheckedChange={() => toggleComplete(todo.id)}
-                            className={todo.completed ? "opacity-50" : ""}
-                          />
-                          <div className="flex-1 min-w-0">
-                            <div
-                              className={cn(
-                                "text-sm font-medium",
-                                todo.completed && "line-through"
-                              )}
-                            >
-                              {todo.title}
-                            </div>
-                            <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-muted-foreground">
-                              <Badge
-                                variant="secondary"
-                                className={cn(
-                                  "px-1 py-0 text-xs font-normal",
-                                  priorityStyles[todo.priority].badge
-                                )}
-                              >
-                                <Flag className={cn("h-3 w-3 mr-1", priorityStyles[todo.priority].icon)} />
-                                {todo.priority}
-                              </Badge>
-                              {todo.startDate && (
-                                <Badge variant="outline" className="px-1 py-0 text-xs font-normal">
-                                  <Calendar className="h-3 w-3 mr-1" />
-                                  Start :
-                                  {new Date(todo.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                                </Badge>
-                              )}
-
-                              {todo.endDate && (
-                                <Badge variant="outline" className="px-1 py-0 text-xs font-normal">
-                                  <Calendar className="h-3 w-3 mr-1" />
-                                  End:
-                                  {new Date(todo.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                                </Badge>
-                              )}
-
-                            </div>
-                          </div>
-                          
-                          {todo.startDate == todo.endDate ? <>
-                           <h2>
-                           {parseInt(todo.endTime)-currentHour>0?
-                           <>
-                           <p>{todo.endTime}</p>
-                           <p className="text-green-600 text-sm"> {parseInt(todo.endTime)-currentHour} hour left</p>
-                           </>: <>
-                           <p>{todo.endTime}</p>
-                           <p className="text-red-600 text-sm">Delay {currentHour-parseInt(todo.endTime)} hour</p>
-                           </>}
-                            </h2>
-                            
-                          </> : <>
-                          {parseInt(todo.endDate.slice(8,10))-now.getDate()<0?<>
-                            <p className="text-red-600 text-sm">{parseInt(todo.endDate.slice(8,10))-now.getDate()} day delay</p>
-                          
-                          </>:<>
-                          
-                           <p className="text-green-400 text-sm">{parseInt(todo.endDate.slice(8,10))-now.getDate()} day left</p>
-                          </>}
-                          </>}
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-destructive rounded-full hover:bg-destructive/10"
-                            onClick={() => setTodoToDelete(todo.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+              <SelectTrigger><SelectValue placeholder="Category" /></SelectTrigger>
+              <SelectContent>
+                {categories.map((cat) => (
+                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                 ))}
-              </div>
-            ) : (
-              <div className="text-center py-12">
-                <CheckSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-xl font-medium mb-2">No Tasks Found</h3>
-                <p className="text-muted-foreground mb-4">
-                  {activeTab === "today"
-                    ? "You don't have any tasks due today."
-                    : activeTab === "upcoming"
-                      ? "You don't have any upcoming tasks."
-                      : activeTab === "completed"
-                        ? "You haven't completed any tasks yet."
-                        : "Add your first task to get started!"}
-                </p>
-                {activeTab === "all" && (
-                  <Button onClick={() => document.querySelector('input')?.focus()}>
-                    Add Your First Task
-                  </Button>
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                <SelectItem value="_new" className="text-blue-500">+ Add Category</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Timer Toggle */}
+          {!timerForm ? (
+            <Button onClick={() => setTimerForm(true)} variant="outline">
+              <Clock className="w-4 h-4 mr-2" /> Set Schedule
+            </Button>
+          ) : (
+            <div className="space-y-2">
+              <Input type="date" value={taskStartDate} onChange={(e) => setTaskStartDate(e.target.value)} placeholder="Start Date" />
+              <Input type="time" value={taskStartTime} onChange={(e) => setTaskStartTime(e.target.value)} placeholder="Start Time" />
+              <Input type="date" value={taskEndDate} onChange={(e) => setTaskEndDate(e.target.value)} placeholder="End Date" />
+              <Input type="time" value={taskEndTime} onChange={(e) => setTaskEndTime(e.target.value)} placeholder="End Time" />
+              <Button onClick={() => setTimerForm(false)}>Close</Button>
+            </div>
+          )}
+
+          <Button onClick={addTodo} className="w-full bg-cyan-500 hover:bg-cyan-700">
+            <Plus className="w-4 h-4 mr-2" /> Add Task
+          </Button>
+        </CardContent>
+      </Card>
       </div>
 
-      {/* Delete Todo Dialog */}
-      <Dialog
-        open={todoToDelete !== null}
-        onOpenChange={(open) => {
-          if (!open) setTodoToDelete(null);
-        }}
-      >
-        <DialogContent className="sm:max-w-[425px]">
+      {/* Tabs & Tasks */}
+      <div className="w-full md:w-2/3 gap-4">
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="grid grid-cols-4 mb-4">
+          <TabsTrigger value="all">All</TabsTrigger>
+          <TabsTrigger value="today">Today</TabsTrigger>
+          <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
+          <TabsTrigger value="completed">Completed</TabsTrigger>
+        </TabsList>
+      </Tabs>
+
+      {Object.entries(todosByCategory).map(([category, todos]) => (
+        <div key={category} className="mb-6">
+          <h4 className="text-lg font-semibold mb-2 flex items-center">
+            <Tag className="w-4 h-4 mr-2" /> {category}
+          </h4>
+          {todos.map((todo) => {
+            const due = todo.endDate && todo.endTime ? new Date(`${todo.endDate}T${todo.endTime}`) : null;
+            const remaining = due ? Math.floor((due.getTime() - now.getTime()) / (1000 * 60 * 60)) : null;
+
+            return (
+              <div key={todo.id} className={cn("flex items-center gap-4 p-3 rounded border ", todo.completed && "bg-muted/40")}>
+                <Checkbox checked={todo.completed} onCheckedChange={() => toggleComplete(todo.id)} />
+                <div className="flex-1">
+                  <p className={cn("font-medium", todo.completed && "line-through")}>{todo.title}</p>
+                  <div className="flex flex-wrap gap-2 mt-1 text-xs">
+                    <Badge className={priorityStyles[todo.priority]?.badge}>
+                      <Flag className="w-3 h-3 mr-1" /> {todo.priority}
+                    </Badge>
+                    {todo.endDate && (
+                      <Badge variant="outline">
+                        <Calendar className="w-3 h-3 mr-1" /> Due: {todo.endDate}
+                      </Badge>
+                    )}
+                    {remaining != null && (
+                      <span className={cn("text-sm", remaining < 0 ? "text-red-500" : "text-green-500")}>
+                        {remaining < 0 ? `Overdue ${-remaining}h` : `${remaining}h left`}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setTodoToDelete(todo.id)}
+                  className="text-red-500 hover:bg-red-200"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+            );
+          })}
+        </div>
+      ))}
+
+      {/* No Tasks UI */}
+      {filteredTodos.length === 0 && (
+        <div className="text-center py-12">
+          <CheckSquare className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
+          <p className="text-muted-foreground">No tasks found in this category.</p>
+        </div>
+      )}
+      </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={!!todoToDelete} onOpenChange={() => setTodoToDelete(null)}>
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>Delete Task</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete this task? This action cannot be undone.
-            </DialogDescription>
+            <DialogDescription>This action cannot be undone.</DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setTodoToDelete(null)}>
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={() => todoToDelete && deleteTodo(todoToDelete)}
-            >
-              Delete
-            </Button>
+            <Button variant="outline" onClick={() => setTodoToDelete(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={() => todoToDelete && deleteTodo(todoToDelete)}>Delete</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* New Category Dialog */}
       <Dialog open={newCategoryDialog} onOpenChange={setNewCategoryDialog}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>Add New Category</DialogTitle>
-            <DialogDescription>
-              Create a new category to organize your tasks.
-            </DialogDescription>
+            <DialogDescription>Name your new task category.</DialogDescription>
           </DialogHeader>
-          <Input
-            placeholder="Category name"
-            value={newCategory}
-            onChange={(e) => setNewCategory(e.target.value)}
-          />
+          <Input value={newCategory} onChange={(e) => setNewCategory(e.target.value)} placeholder="Category name" />
           <DialogFooter>
-            <Button variant="outline" onClick={() => setNewCategoryDialog(false)}>
-              Cancel
-            </Button>
-            <Button onClick={addCategory}>Add Category</Button>
+            <Button variant="outline" onClick={() => setNewCategoryDialog(false)}>Cancel</Button>
+            <Button onClick={addCategory}>Add</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
