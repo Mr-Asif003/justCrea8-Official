@@ -187,7 +187,7 @@ const handleDeleteTask = async (taskId: string) => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Total Tasks</p>
-                  <p className="text-3xl font-bold text-primary">{projectDetails?.tasks.length}</p>
+                  <p className="text-3xl font-bold text-primary">{projectDetails?.tasks?.length}</p>
                 </div>
                 <Target className="h-8 w-8 text-primary/60" />
               </div>

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
-import { CirclePlus, Clock, Delete, DeleteIcon, Group } from 'lucide-react';
+import { CirclePlus, Clock, Group } from 'lucide-react';
 import { Fade } from 'react-awesome-reveal';
 import TypeWriterEffect from 'react-typewriter-effect';
 import {
@@ -11,15 +11,16 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
 import { auth, db } from '@/Firebase/firebaseConfig';
 import { toast } from 'sonner';
-import { arrayUnion, doc, updateDoc } from 'firebase/firestore';
+import { arrayUnion, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
+import Rooms from './Rooms';
 
 export default function GDHome({ projectDetails }) {
   const theme = useTheme();
@@ -35,54 +36,99 @@ export default function GDHome({ projectDetails }) {
   const [joinUserName, setJoinUserName] = useState('');
   const [enteredPassword, setEnteredPassword] = useState('');
   const [selectedMeeting, setSelectedMeeting] = useState(null);
+  const [members, setMembers] = useState([]);
+  const [passedRoomId, setPassedRoomId] = useState('');
+  const [openFullScreenDialog, setOpenFullScreenDialog] = useState(false);
 
   const navigate = useNavigate();
   const currentUserUid = auth.currentUser?.uid;
+  const displayName = auth.currentUser?.displayName;
 
   useEffect(() => {
-    if (projectDetails?.meetings) {
-      setMeetings(projectDetails.meetings);
-    }
-  }, [projectDetails]);
+    const fetchDetails = async () => {
+      const projectRef = doc(db, 'projects', projectDetails.projectId);
+      const docSnap = await getDoc(projectRef);
+      const data = docSnap.data();
+      if (data?.meetings) {
+        setMeetings(data.meetings);
+      }
+    };
+    fetchDetails();
+  }, [projectDetails.projectId]);
 
-  const handleJoin = () => {
+  const handleJoin = async () => {
     if (!joinUserName || !enteredPassword) {
       toast.error('Please enter your name and password');
       return;
     }
-    if (selectedMeeting.password !== enteredPassword) {
+
+    if (selectedMeeting?.password !== enteredPassword) {
       toast.error('Incorrect password');
       return;
     }
-    navigate(`./${selectedMeeting.roomId}`, {
-      state: {
-        userName: joinUserName,
-        roomName: selectedMeeting.title,
-      },
-    });
+
+    try {
+      const updatedMeetings = meetings.map((meeting) => {
+        if (meeting.roomId === selectedMeeting.roomId) {
+          const existingMembers = meeting.members || [];
+
+          const alreadyExists = existingMembers.some(
+            (member) => member.id === currentUserUid
+          );
+
+          if (!alreadyExists) {
+            existingMembers.push({
+              name: joinUserName,
+              id: currentUserUid,
+              participationScore: 0,
+              timeSpoken: 0,
+            });
+          }
+
+          return { ...meeting, members: existingMembers };
+        }
+        return meeting;
+      });
+
+      const projectRef = doc(db, 'projects', projectDetails.projectId);
+      await updateDoc(projectRef, { meetings: updatedMeetings });
+
+      const selectedUpdatedMeeting = updatedMeetings.find(
+        (m) => m.roomId === selectedMeeting.roomId
+      );
+
+      setMembers(selectedUpdatedMeeting?.members || []);
+      setPassedRoomId(selectedUpdatedMeeting?.roomId || '');
+      setMeetings(updatedMeetings);
+      setOpenJoinDialog(false);
+      setOpenFullScreenDialog(true);
+      toast.success('Joined room successfully');
+    } catch (e) {
+      console.error('Error in handleJoin:', e);
+      toast.error('Error joining the room');
+    }
   };
+
   const handleDelete = async (roomIdToDelete) => {
-  try {
-    const updatedMeetings = meetings.filter(meeting => meeting.roomId !== roomIdToDelete);
-    const projectRef = doc(db, 'projects', projectDetails.projectId);
+    try {
+      const updatedMeetings = meetings.filter(
+        (meeting) => meeting.roomId !== roomIdToDelete
+      );
+      const projectRef = doc(db, 'projects', projectDetails.projectId);
+      await updateDoc(projectRef, { meetings: updatedMeetings });
 
-    await updateDoc(projectRef, {
-      meetings: updatedMeetings,
-    });
-
-    setMeetings(updatedMeetings);
-    toast.success('Meeting deleted successfully');
-  } catch (error) {
-    console.error('Error deleting meeting:', error);
-    toast.error('Failed to delete meeting');
-  }
-};
-
+      setMeetings(updatedMeetings);
+      toast.success('Meeting deleted successfully');
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to delete meeting');
+    }
+  };
 
   const handleCreateRoom = () => {
-    if(meetings.length>3){
-      toast.success('You can only create atmost 3 rooms ')
-     return
+    if (meetings.length >= 3) {
+      toast.error('You can only create at most 3 rooms');
+      return;
     }
     setOpenCreateDialog(true);
   };
@@ -100,6 +146,7 @@ export default function GDHome({ projectDetails }) {
       isPublic,
       password: isPublic ? '123' : meetingPassword,
       startTime: meetingStartTime,
+      members: [],
     };
 
     try {
@@ -107,7 +154,7 @@ export default function GDHome({ projectDetails }) {
       await updateDoc(projectRef, {
         meetings: arrayUnion(newMeeting),
       });
-      setMeetings(prev => [...prev, newMeeting]);
+      setMeetings((prev) => [...prev, newMeeting]);
       toast.success('Room Created Successfully.');
       setOpenCreateDialog(false);
       setMeetingTitle('');
@@ -115,7 +162,9 @@ export default function GDHome({ projectDetails }) {
       setMeetingPassword('');
       setMeetingStartTime('');
     } catch (e) {
+      console.error('Error creating meeting:', e);
       toast.error('Error creating room');
+
     }
   };
 
@@ -136,12 +185,11 @@ export default function GDHome({ projectDetails }) {
       </header>
 
       <section className="flex flex-col md:flex-row gap-2">
-        <div className="w-auto mt-12  border-orange-700 p-10 py-10 h-auto gap-4 flex justify-between items-center transition-all duration-300 transform hover:-translate-y-1 hover:scale-95 bg-gradient-to-br hover:shadow-cyan-500 rounded-xl shadow-md hover:border-none border backdrop-blur-xl">
+        <div className="w-auto mt-12 border-orange-700 p-10 h-auto gap-4 flex justify-between items-center transition-all duration-300 transform hover:-translate-y-1 hover:scale-95 bg-gradient-to-br hover:shadow-cyan-500 rounded-xl shadow-md hover:border-none border backdrop-blur-xl">
           <Fade>
-            <div className='p'>
-              <h2 className="text-lg font-semibold text-cyan-500 font-mono text-start">Create Meeting</h2>
-              <p className="text-xs">start discussing and meeting with you team mates by creating rooms</p>
-
+            <div>
+              <h2 className="text-lg font-semibold text-cyan-500 font-mono">Create Meeting</h2>
+              <p className="text-xs">Start discussing and meeting with your teammates by creating rooms</p>
             </div>
           </Fade>
           <button onClick={handleCreateRoom} className="bg-black hover:animate-spin p-3 rounded-full">
@@ -170,15 +218,13 @@ export default function GDHome({ projectDetails }) {
                   <div className="text-sm mt-2 space-y-1 text-white">
                     <p>Room ID: <span className="font-mono">{meeting.roomId}</span></p>
                     <p>Room Password: <span className="font-mono">{meeting.password}</span></p>
-                    <button onClick={() => {
-               
-                  handleDelete(meeting.roomId)
-                }} className='p-2 bg-red-700 rounded-sm'>
+                    <button
+                      onClick={() => handleDelete(meeting.roomId)}
+                      className="p-2 bg-red-700 rounded-sm"
+                    >
                       Delete
-          
                     </button>
                   </div>
-
                 )}
               </div>
               <Button
@@ -195,32 +241,49 @@ export default function GDHome({ projectDetails }) {
         )}
       </section>
 
+      <Button onClick={() => setOpenFullScreenDialog(true)} className="bg-purple-700 hover:bg-purple-800 text-white">
+        Open Full Screen Dialog
+      </Button>
+
+      {/* Full Screen Dialog */}
+      <Dialog open={openFullScreenDialog} onOpenChange={setOpenFullScreenDialog}>
+        <DialogContent className="w-screen h-screen max-w-full max-h-screen bg-black text-white p-6 overflow-y-auto flex flex-col gap-6">
+          <DialogHeader>
+            <DialogTitle className="text-cyan-400 text-2xl font-mono">
+              Welcome to Group Meeting
+            </DialogTitle>
+          </DialogHeader>
+          <Rooms  projectId={projectDetails.projectId} roomId={passedRoomId} />
+          <DialogFooter>
+            <Button onClick={() => setOpenFullScreenDialog(false)} className="bg-cyan-600 hover:bg-cyan-700 text-white">
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Meeting Dialog */}
       <Dialog open={openCreateDialog} onOpenChange={setOpenCreateDialog}>
         <DialogContent className="bg-black text-white border border-cyan-700 max-w-md">
           <DialogHeader>
             <DialogTitle className="text-cyan-400 font-mono">Create New Meeting</DialogTitle>
           </DialogHeader>
-
           <div className="flex flex-col gap-4 py-2">
             <Label className="text-white">Meeting Title</Label>
             <Input value={meetingTitle} onChange={(e) => setMeetingTitle(e.target.value)} className="bg-white/10 text-white" />
-
             <div className="flex items-center justify-between">
               <Label className="text-white">Is Public?</Label>
               <Switch checked={isPublic} onCheckedChange={setIsPublic} />
             </div>
-
             {!isPublic && (
-              <div>
+              <>
                 <Label className="text-white">Meeting Password</Label>
                 <Input type="password" value={meetingPassword} onChange={(e) => setMeetingPassword(e.target.value)} className="bg-white/10 text-white" />
-              </div>
+              </>
             )}
-
             <Label className="text-white">Start Time</Label>
             <Input type="datetime-local" value={meetingStartTime} onChange={(e) => setMeetingStartTime(e.target.value)} className="bg-white/10 text-white" />
           </div>
-
           <DialogFooter>
             <Button onClick={handleCreateMeetingConfirm} className="bg-cyan-600 hover:bg-cyan-700 text-white w-full">
               Create Meeting
@@ -229,20 +292,18 @@ export default function GDHome({ projectDetails }) {
         </DialogContent>
       </Dialog>
 
+      {/* Join Meeting Dialog */}
       <Dialog open={openJoinDialog} onOpenChange={setOpenJoinDialog}>
         <DialogContent className="bg-black text-white border border-cyan-700 max-w-md">
           <DialogHeader>
             <DialogTitle className="text-cyan-400 font-mono">Join Meeting</DialogTitle>
           </DialogHeader>
-
           <div className="flex flex-col gap-4 py-2">
             <Label className="text-white">Your Name</Label>
             <Input value={joinUserName} onChange={(e) => setJoinUserName(e.target.value)} className="bg-white/10 text-white" />
-
             <Label className="text-white">Meeting Password</Label>
             <Input type="password" value={enteredPassword} onChange={(e) => setEnteredPassword(e.target.value)} className="bg-white/10 text-white" />
           </div>
-
           <DialogFooter>
             <Button onClick={handleJoin} className="bg-cyan-600 hover:bg-cyan-700 text-white w-full">
               Join Room

@@ -1,50 +1,25 @@
-
 import React from 'react';
 import { CheckCircle, Circle, Clock, AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 
-export const ProjectTimeline = () => {
-  const milestones = [
-    {
-      id: 1,
-      title: "Project Setup & Planning",
-      date: "Mar 15, 2024",
-      status: "completed",
-      progress: 100
-    },
-    {
-      id: 2,
-      title: "Backend Development",
-      date: "Apr 1, 2024",
-      status: "completed",
-      progress: 100
-    },
-    {
-      id: 3,
-      title: "Frontend Integration",
-      date: "Apr 15, 2024",
-      status: "in-progress",
-      progress: 75
-    },
-    {
-      id: 4,
-      title: "Testing & QA",
-      date: "May 1, 2024",
-      status: "pending",
-      progress: 0
-    },
-    {
-      id: 5,
-      title: "Deployment",
-      date: "May 15, 2024",
-      status: "pending",
-      progress: 0
-    }
-  ];
+interface TimelineItem {
+  phase: string;
+  title: string;
+  subtitle?: string;
+  description?: string;
+  date: string;
+  status?: 'completed' | 'in-progress' | 'pending' | 'delayed';
+  progress?: number;
+}
 
-  const getStatusIcon = (status: string) => {
+interface ProjectTimelineProps {
+  timelines: TimelineItem[];
+}
+
+export const ProjectTimeline: React.FC<ProjectTimelineProps> = ({ timelines }) => {
+  const getStatusIcon = (status: string = 'pending') => {
     switch (status) {
       case 'completed':
         return <CheckCircle className="h-5 w-5 text-green-500" />;
@@ -57,7 +32,7 @@ export const ProjectTimeline = () => {
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string = 'pending') => {
     switch (status) {
       case 'completed':
         return 'bg-green-500/10 text-green-600 border-green-500/20';
@@ -81,46 +56,55 @@ export const ProjectTimeline = () => {
       <CardContent>
         <div className="overflow-x-auto">
           <div className="flex space-x-6 pb-4 min-w-max">
-            {milestones.map((milestone, index) => (
-              <div key={milestone.id} className="flex-shrink-0 w-64">
-                <div className="relative">
-                  {index < milestones.length - 1 && (
-                    <div className="absolute top-6 left-6 w-full h-0.5 bg-gradient-to-r from-primary/30 to-muted transform translate-x-6" />
-                  )}
-                  
-                  <div className="bg-card/50 backdrop-blur-sm border border-primary/20 rounded-lg p-4 hover:shadow-lg transition-all duration-300 hover:border-primary/40">
-                    <div className="flex items-start space-x-3">
-                      {getStatusIcon(milestone.status)}
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-sm line-clamp-2">
-                          {milestone.title}
-                        </h4>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {milestone.date}
-                        </p>
-                        
-                        <Badge 
-                          variant="outline" 
-                          className={`mt-2 text-xs ${getStatusColor(milestone.status)}`}
-                        >
-                          {milestone.status.replace('-', ' ')}
-                        </Badge>
-                        
-                        {milestone.status !== 'pending' && (
-                          <div className="mt-3">
-                            <div className="flex justify-between text-xs mb-1">
-                              <span>Progress</span>
-                              <span>{milestone.progress}%</span>
+            {timelines.map((item, index) => {
+              const status = item.status || 'pending';
+              const progress = item.progress ?? (status === 'completed' ? 100 : status === 'in-progress' ? 50 : 0);
+
+              return (
+                <div key={index} className="flex-shrink-0 w-64">
+                  <div className="relative">
+                    {index < timelines.length - 1 && (
+                      <div className="absolute top-6 left-6 w-full h-0.5 bg-gradient-to-r from-primary/30 to-muted transform translate-x-6" />
+                    )}
+
+                    <div className="bg-card/50 backdrop-blur-sm border border-primary/20 rounded-lg p-4 hover:shadow-lg transition-all duration-300 hover:border-primary/40">
+                      <div className="flex items-start space-x-3">
+                        {getStatusIcon(status)}
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold text-sm">{item.phase}</h4>
+                          <p className="text-xs text-muted-foreground">{item.date}</p>
+                          <p className="text-sm mt-1 font-medium line-clamp-2">{item.title}</p>
+                          {item.subtitle && (
+                            <p className="text-xs text-muted-foreground">{item.subtitle}</p>
+                          )}
+                          <Badge
+                            variant="outline"
+                            className={`mt-2 text-xs ${getStatusColor(status)}`}
+                          >
+                            {status.replace('-', ' ')}
+                          </Badge>
+
+                          {(status !== 'pending' && status !== 'delayed') && (
+                            <div className="mt-3">
+                              <div className="flex justify-between text-xs mb-1">
+                                <span>Progress</span>
+                                <span>{progress}%</span>
+                              </div>
+                              <Progress value={progress} className="h-2" />
                             </div>
-                            <Progress value={milestone.progress} className="h-2" />
-                          </div>
-                        )}
+                          )}
+                        </div>
                       </div>
+                      {item.description && (
+                        <p className="text-xs mt-2 text-muted-foreground line-clamp-3">
+                          {item.description}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </CardContent>

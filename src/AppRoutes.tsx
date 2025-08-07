@@ -47,6 +47,7 @@ import TeamsLayout from "./components/layout/TeamsLayout";
 import TeamLayout from "./components/layout/TeamLayout";
 import UserTeams from "./pages/projectPages/UserTeams";
 import SpecificTeams from "./pages/projectPages/SpecificTeams";
+import Rooms from "./pages/specificProjectPage/GroupDiscussion/Rooms";
 
 
 import CreateTeam from "./pages/projectPages/teamWorkspace.tsx/CreateTeam";
@@ -57,6 +58,7 @@ import UpdateTeam from "./pages/projectPages/teamWorkspace.tsx/UpdateTeam";
 import CreateProject from "./pages/projectPages/projectWorkspace.tsx/CreateProject";
 import JoinProject from "./pages/projectPages/projectWorkspace.tsx/JoinProject";
 import UpdateProject from "./pages/projectPages/projectWorkspace.tsx/UpdateProject";
+
 const AppRoutes = () => {
   const { isLogin } = useAuth();
 
@@ -131,6 +133,7 @@ const AppRoutes = () => {
                   <Route path="notes" element={<NoteProject />} />
                   <Route path="setting" element={<ProjectSettingsScreen />} />
                   <Route path='kanban' element={<KanbanBoard />} />
+                  <Route path='rooms/:roomId' element={<Rooms/>}/>
                 </Route>
               </Route>
             </Route>

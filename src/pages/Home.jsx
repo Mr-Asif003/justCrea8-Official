@@ -20,6 +20,7 @@ const Home = () => {
 
     // Show newsletter modal after 5 seconds
     
+    
 
   return (
     <div className="min-h-screen bg-background text-foreground">

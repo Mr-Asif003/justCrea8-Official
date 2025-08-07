@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { CheckSquare, Filter, Plus, User } from 'lucide-react';
+import { CheckSquare, Filter, Plus } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -21,59 +20,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-export const ProjectTasks = () => {
+export const ProjectTasks = ({ tasks = [] }) => {
   const [statusFilter, setStatusFilter] = useState('all');
-
-  const tasks = [
-    {
-      id: 1,
-      title: "Implement user authentication system",
-      status: "in-progress",
-      priority: "high",
-      assignee: {
-        name: "Alex Rodriguez",
-        avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=32&h=32&fit=crop&crop=face"
-      },
-      dueDate: "Apr 20, 2024",
-      progress: 75
-    },
-    {
-      id: 2,
-      title: "Design dashboard components",
-      status: "completed",
-      priority: "medium",
-      assignee: {
-        name: "Maya Patel",
-        avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=32&h=32&fit=crop&crop=face"
-      },
-      dueDate: "Apr 15, 2024",
-      progress: 100
-    },
-    {
-      id: 3,
-      title: "Set up CI/CD pipeline",
-      status: "todo",
-      priority: "high",
-      assignee: {
-        name: "David Kim",
-        avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=32&h=32&fit=crop&crop=face"
-      },
-      dueDate: "Apr 25, 2024",
-      progress: 0
-    },
-    {
-      id: 4,
-      title: "Data visualization components",
-      status: "in-progress",
-      priority: "medium",
-      assignee: {
-        name: "Lisa Wang",
-        avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=32&h=32&fit=crop&crop=face"
-      },
-      dueDate: "Apr 30, 2024",
-      progress: 40
-    }
-  ];
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -101,9 +49,9 @@ export const ProjectTasks = () => {
     }
   };
 
-  const filteredTasks = statusFilter === 'all' 
-    ? tasks 
-    : tasks.filter(task => task.status === statusFilter);
+  const filteredTasks = statusFilter === 'all'
+    ? tasks
+    : tasks.filter((task) => task.status === statusFilter);
 
   return (
     <Card className="glass-morphism border-primary/20">
@@ -116,7 +64,7 @@ export const ProjectTasks = () => {
               {filteredTasks.length}
             </Badge>
           </CardTitle>
-          
+
           <div className="flex items-center space-x-2">
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-40">
@@ -130,7 +78,7 @@ export const ProjectTasks = () => {
                 <SelectItem value="completed">Completed</SelectItem>
               </SelectContent>
             </Select>
-            
+
             <Button className="bg-primary hover:bg-primary/90">
               <Plus className="h-4 w-4 mr-2" />
               Add Task
@@ -151,48 +99,58 @@ export const ProjectTasks = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredTasks.map((task) => (
-              <TableRow key={task.id} className="hover:bg-primary/5">
-                <TableCell className="font-medium">{task.title}</TableCell>
+            {filteredTasks.map((task, index) => (
+              <TableRow key={task.id || index} className="hover:bg-primary/5">
+                <TableCell className="font-medium">{task.title || task.description}</TableCell>
                 <TableCell>
                   <Badge
                     variant="outline"
-                    className={getStatusColor(task.status)}
+                    className={getStatusColor(task.status || 'todo')}
                   >
-                    {task.status.replace('-', ' ')}
+                    {(task.status || 'todo').replace('-', ' ')}
                   </Badge>
                 </TableCell>
                 <TableCell>
                   <Badge
                     variant="outline"
-                    className={getPriorityColor(task.priority)}
+                    className={getPriorityColor(task.priority || 'medium')}
                   >
-                    {task.priority}
+                    {task.priority || 'medium'}
                   </Badge>
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center space-x-2">
                     <Avatar className="h-6 w-6">
-                      <AvatarImage src={task.assignee.avatar} />
+                      <AvatarImage
+                        src={task.assignee?.avatar || ''}
+                        alt={task.assignee?.name}
+                      />
                       <AvatarFallback>
-                        {task.assignee.name.split(' ').map(n => n[0]).join('')}
+                        {task.assignee?.name
+                          ? task.assignee.name
+                              .split(' ')
+                              .map((n) => n[0])
+                              .join('')
+                          : 'NA'}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="text-sm">{task.assignee.name}</span>
+                    <span className="text-sm">{task.assignee?.name || task.assignee || 'Unassigned'}</span>
                   </div>
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">
-                  {task.dueDate}
+                  {task.dueDate || task.createdAt || '—'}
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center space-x-2">
                     <div className="w-16 bg-muted rounded-full h-2">
                       <div
                         className="bg-primary h-2 rounded-full transition-all duration-300"
-                        style={{ width: `${task.progress}%` }}
+                        style={{ width: `${task.progress || 0}%` }}
                       />
                     </div>
-                    <span className="text-sm font-medium">{task.progress}%</span>
+                    <span className="text-sm font-medium">
+                      {task.progress || 0}%
+                    </span>
                   </div>
                 </TableCell>
               </TableRow>

@@ -21,6 +21,7 @@ import { motion } from 'framer-motion';
 import { ProjectTimeline } from '@/components/project/ProjectTimeline';
 import { ProjectTasks } from '@/components/project/ProjectTasks';
 import { ProjectInfo } from '@/components/project/ProjectInfo';
+import { auth } from '@/Firebase/firebaseConfig';
 
 export default function Project({projectDetails}) {
 
@@ -28,6 +29,7 @@ export default function Project({projectDetails}) {
   const { theme } = useTheme();
   const { projectId } = location.state || {};
   console.log(projectDetails,'sflksjf')
+  const user=auth.currentUser.uid
 
   const metrics = [
     { label: "Tasks", value: 124, icon: <Layers className="text-cyan-400" /> },
@@ -76,17 +78,17 @@ export default function Project({projectDetails}) {
 
         {/* Foreground Content */}
         <div className="relative z-10 flex-1">
-          <h1 className="text-2xl font-bold text-cyan-400 mb-2">🚀 Project Name</h1>
+          <h1 className="text-2xl font-bold text-cyan-400 mb-2">🚀 {projectDetails.projectName}</h1>
           <TypeWriterEffect
             textStyle={{ fontFamily: 'Red Hat Display', fontSize: '16px' }}
             startDelay={200}
             cursorColor="white"
-            text="Welcome to justCrea8 Project Management"
+            text={projectDetails.description}
             typeSpeed={90}
           />
           <div className="mt-6 text-gray-400 text-sm flex flex-col sm:flex-row gap-4">
-            <p>🕓 Created: 2024-06-01</p>
-            <p>📅 Ends: 2025-06-30</p>
+            <p>🕓 Created:{projectDetails.startAt}</p>
+            <p>📅 Ends: {projectDetails.endAt}</p>
           </div>
         </div>
 
@@ -95,15 +97,18 @@ export default function Project({projectDetails}) {
             LOGO
           </div>
           <div className="text-sm text-cyan-300 text-center">
-            <p>👤 Admin: <strong>Alice</strong></p>
-            <p>🧑‍💼 Project Manager: <strong>Bob</strong></p>
-          </div>
-          <div className="text-xs text-gray-400 mt-2 text-center">
-            <p>🔗 Project Link: /projects/{projectId}</p>
-            <p>🔒 Master Key: only admin & PM</p>
+            <p>👤 Admin: <strong>{projectDetails.teamAdmin.name}</strong></p>
+            <p>🧑‍💼 Project Manager: <strong>{projectDetails.projectManager.name}</strong></p>
           </div>
         </div>
       </section>
+          <div className="text-xs text-gray-400 mt-2 text-center px-[30%]">
+            <p className='text-xl bg-transparent border-b-2 border-orange-500 p-4'>🔗 Project Link: {projectDetails.projectId}</p>
+            {user==projectDetails.teamAdmin.uid||user==projectDetails.projectManager.uid&&(
+            <p>🔒 Master Key: {projectDetails.password}</p>
+
+            )}
+          </div>
 
       {/* AI Tips & Controls */}
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -152,16 +157,16 @@ export default function Project({projectDetails}) {
 
       {/* Timeline */}
       <section>
-        <ProjectTimeline />
+        <ProjectTimeline timelines={projectDetails?.timelines||[]} />
       </section>
 
       {/* Tasks and Info - Responsive */}
       <section className="flex flex-col md:flex-row gap-4 w-full">
         <div className="w-full md:w-2/3">
-          <ProjectTasks />
+          <ProjectTasks tasks={projectDetails.tasks} />
         </div>
         <div className="w-full md:w-1/3 flex flex-col gap-4">
-          <ProjectInfo />
+          <ProjectInfo  pd={projectDetails}/>
           <Countdown />
         </div>
       </section>

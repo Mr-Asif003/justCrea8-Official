@@ -5,13 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 
-export const ProjectInfo = () => {
+export const ProjectInfo = ({pd}) => {
   const projectDetails = {
-    budget: "$50,000",
+    budget:`${pd.budget} `,
     spent: "$32,500",
-    priority: "High",
-    techStack: ["React", "Node.js", "PostgreSQL", "Docker", "AWS"],
-    completion: 65
+    priority: `${pd.priority} `,
+    techStack: [`${pd.domain} `],
+    completion: `${pd.phaseProgress} `
   };
 
   const spentPercentage = (32500 / 50000) * 100;

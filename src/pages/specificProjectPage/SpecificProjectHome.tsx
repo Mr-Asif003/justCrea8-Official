@@ -31,7 +31,7 @@ import Project from "./Project";
 import Workspace from "./WorkSpace";
 import ProjectDashboard from "./PDashboard4";
 import ProjectMembers from "./ProjectMembers";
-import GDHome from "./GroupDiscussion/gdHome";
+import GDHome from "./GroupDiscussion/GDHome";
 
 import { useParams } from "react-router-dom";
 import { db } from "@/Firebase/firebaseConfig";

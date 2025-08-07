@@ -21,10 +21,16 @@ import { doc, updateDoc } from "firebase/firestore";
 import { db } from "@/Firebase/firebaseConfig";
 import { toast } from "sonner";
 
+// Define prop types
+interface ProjectDashboardProps {
+  projectDetails: any;
+  projectId: string;
+}
+
 const COLORS = ["#06b6d4", "#f59e0b", "#10b981", "#ef4444"];
 
-export default function ProjectDashboard({ projectDetails, projectId }) {
-  const [projectData, setProjectData] = useState(projectDetails || {});
+export default function ProjectDashboard({ projectDetails, projectId }: ProjectDashboardProps) {
+  const [projectData, setProjectData] = useState<any>(projectDetails || {});
   const [editing, setEditing] = useState(false);
   const [editToday, setEditToday] = useState(false);
   const [editStatus, setEditStatus] = useState(false);
@@ -40,15 +46,20 @@ export default function ProjectDashboard({ projectDetails, projectId }) {
     }
   }, [projectDetails]);
 
-  const updateArrayField = (type, index, field, value) => {
+  const updateArrayField = (type: string, index: number, field: string, value: any) => {
     const updated = [...(projectData?.[type] || [])];
     updated[index][field] = value;
-    setProjectData((prev) => ({ ...prev, [type]: updated }));
+    setProjectData((prev: any) => ({ ...prev, [type]: updated }));
   };
 
-  const addToArrayField = (type, newItem) => {
+  const addToArrayField = (type: string, newItem: any) => {
+    if (!newItem.name) return toast.error("Name is required");
     const updated = [...(projectData?.[type] || []), newItem];
-    setProjectData((prev) => ({ ...prev, [type]: updated }));
+    setProjectData((prev: any) => ({ ...prev, [type]: updated }));
+
+    // Reset fields
+    if (type === "workloadData") setNewWorkload({ name: "", tasks: "" });
+    if (type === "phaseData") setNewPhase({ name: "", value: "" });
   };
 
   const handleSave = async () => {
@@ -62,13 +73,14 @@ export default function ProjectDashboard({ projectDetails, projectId }) {
     }
   };
 
-  if (!projectData || Object.keys(projectData).length === 0) return <div className="p-6">Loading project...</div>;
+  if (!projectData || Object.keys(projectData).length === 0)
+    return <div className="p-6">Loading project...</div>;
 
   const today = new Date();
   const endDate = new Date(projectData.endAt);
   const startDate = new Date(projectData.startAt);
-  const totalDays = Math.max(1, (endDate - startDate) / (1000 * 60 * 60 * 24));
-  const leftDays = Math.max(0, (endDate - today) / (1000 * 60 * 60 * 24));
+  const totalDays = Math.max(1, (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+  const leftDays = Math.max(0, (endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 
   return (
     <div className="p-6 space-y-6">
@@ -100,16 +112,22 @@ export default function ProjectDashboard({ projectDetails, projectId }) {
               </CardHeader>
               <CardContent>
                 {editToday ? (
-                  <Input type="date" value={customDate} onChange={(e) => setCustomDate(e.target.value)} />
+                  <Input
+                    type="date"
+                    value={customDate}
+                    onChange={(e) => setCustomDate(e.target.value)}
+                  />
                 ) : (
                   <>
                     <p>{today.toDateString()}</p>
                     <p className="text-sm text-gray-400">End Date: {endDate.toDateString()}</p>
                     <ResponsiveContainer width="100%" height={100}>
-                      <BarChart data={[
-                        { name: "Time Left", value: leftDays },
-                        { name: "Total Time", value: totalDays },
-                      ]}>
+                      <BarChart
+                        data={[
+                          { name: "Time Left", value: leftDays },
+                          { name: "Total Time", value: totalDays },
+                        ]}
+                      >
                         <XAxis dataKey="name" />
                         <YAxis />
                         <Tooltip />
@@ -139,7 +157,7 @@ export default function ProjectDashboard({ projectDetails, projectId }) {
                       type="number"
                       value={projectData.phaseProgress}
                       onChange={(e) =>
-                        setProjectData((prev) => ({
+                        setProjectData((prev: any) => ({
                           ...prev,
                           phaseProgress: Number(e.target.value),
                         }))
@@ -148,7 +166,7 @@ export default function ProjectDashboard({ projectDetails, projectId }) {
                     <Select
                       value={projectData.status}
                       onValueChange={(val) =>
-                        setProjectData((prev) => ({ ...prev, status: val }))
+                        setProjectData((prev: any) => ({ ...prev, status: val }))
                       }
                     >
                       <SelectTrigger>
@@ -182,25 +200,52 @@ export default function ProjectDashboard({ projectDetails, projectId }) {
               <CardContent>
                 {editWorkload ? (
                   <>
-                    {(projectData.workloadData || []).map((m, i) => (
+                    {(projectData.workloadData || []).map((m: any, i: number) => (
                       <div key={i} className="flex gap-2 mb-2">
                         <Input
                           value={m.name}
-                          onChange={(e) => updateArrayField("workloadData", i, "name", e.target.value)}
+                          onChange={(e) =>
+                            updateArrayField("workloadData", i, "name", e.target.value)
+                          }
                           className="w-1/2"
                         />
                         <Input
                           type="number"
                           value={m.tasks}
-                          onChange={(e) => updateArrayField("workloadData", i, "tasks", +e.target.value)}
+                          onChange={(e) =>
+                            updateArrayField("workloadData", i, "tasks", +e.target.value)
+                          }
                           className="w-1/2"
                         />
                       </div>
                     ))}
                     <div className="flex gap-2">
-                      <Input placeholder="Name" value={newWorkload.name} onChange={(e) => setNewWorkload({ ...newWorkload, name: e.target.value })} />
-                      <Input placeholder="Tasks" type="number" value={newWorkload.tasks} onChange={(e) => setNewWorkload({ ...newWorkload, tasks: e.target.value })} />
-                      <Button variant="ghost" onClick={() => addToArrayField("workloadData", { ...newWorkload, tasks: +newWorkload.tasks })}><Plus size={16} /></Button>
+                      <Input
+                        placeholder="Name"
+                        value={newWorkload.name}
+                        onChange={(e) =>
+                          setNewWorkload({ ...newWorkload, name: e.target.value })
+                        }
+                      />
+                      <Input
+                        placeholder="Tasks"
+                        type="number"
+                        value={newWorkload.tasks}
+                        onChange={(e) =>
+                          setNewWorkload({ ...newWorkload, tasks: e.target.value })
+                        }
+                      />
+                      <Button
+                        variant="ghost"
+                        onClick={() =>
+                          addToArrayField("workloadData", {
+                            ...newWorkload,
+                            tasks: +newWorkload.tasks,
+                          })
+                        }
+                      >
+                        <Plus size={16} />
+                      </Button>
                     </div>
                   </>
                 ) : (
@@ -217,7 +262,7 @@ export default function ProjectDashboard({ projectDetails, projectId }) {
             </Card>
           </div>
 
-          {/* Phase */}
+          {/* Phase Distribution */}
           <div className="grid grid-cols-1 md:grid-cols-2 mt-6 gap-6">
             <Card>
               <CardHeader className="flex justify-between">
@@ -229,23 +274,57 @@ export default function ProjectDashboard({ projectDetails, projectId }) {
               <CardContent>
                 {editPhase ? (
                   <>
-                    {(projectData.phaseData || []).map((p, i) => (
+                    {(projectData.phaseData || []).map((p: any, i: number) => (
                       <div key={i} className="flex gap-2 mb-2">
-                        <Input value={p.name} onChange={(e) => updateArrayField("phaseData", i, "name", e.target.value)} className="w-1/2" />
-                        <Input type="number" value={p.value} onChange={(e) => updateArrayField("phaseData", i, "value", +e.target.value)} className="w-1/2" />
+                        <Input
+                          value={p.name}
+                          onChange={(e) => updateArrayField("phaseData", i, "name", e.target.value)}
+                          className="w-1/2"
+                        />
+                        <Input
+                          type="number"
+                          value={p.value}
+                          onChange={(e) => updateArrayField("phaseData", i, "value", +e.target.value)}
+                          className="w-1/2"
+                        />
                       </div>
                     ))}
                     <div className="flex gap-2">
-                      <Input placeholder="Phase" value={newPhase.name} onChange={(e) => setNewPhase({ ...newPhase, name: e.target.value })} />
-                      <Input placeholder="%" type="number" value={newPhase.value} onChange={(e) => setNewPhase({ ...newPhase, value: e.target.value })} />
-                      <Button variant="ghost" onClick={() => addToArrayField("phaseData", { ...newPhase, value: +newPhase.value })}><Plus size={16} /></Button>
+                      <Input
+                        placeholder="Phase"
+                        value={newPhase.name}
+                        onChange={(e) => setNewPhase({ ...newPhase, name: e.target.value })}
+                      />
+                      <Input
+                        placeholder="%"
+                        type="number"
+                        value={newPhase.value}
+                        onChange={(e) => setNewPhase({ ...newPhase, value: e.target.value })}
+                      />
+                      <Button
+                        variant="ghost"
+                        onClick={() =>
+                          addToArrayField("phaseData", {
+                            ...newPhase,
+                            value: +newPhase.value,
+                          })
+                        }
+                      >
+                        <Plus size={16} />
+                      </Button>
                     </div>
                   </>
                 ) : (
                   <ResponsiveContainer width="100%" height={200}>
                     <PieChart>
-                      <Pie data={projectData.phaseData} cx="50%" cy="50%" outerRadius={60} dataKey="value">
-                        {projectData.phaseData.map((_, i) => (
+                      <Pie
+                        data={projectData.phaseData}
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={60}
+                        dataKey="value"
+                      >
+                        {(projectData.phaseData || []).map((_: any, i: number) => (
                           <Cell key={i} fill={COLORS[i % COLORS.length]} />
                         ))}
                       </Pie>

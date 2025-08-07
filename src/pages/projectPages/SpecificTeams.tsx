@@ -99,9 +99,10 @@ const handleConfirm = () => {
   };
 
   const handleNavigation = (projectId) => {
+    alert(projectId)
   navigate(`./${projectId}`, {
     state: {
-      projectId: projectId,
+      pId: projectId,
     },
   });
 };
@@ -279,7 +280,7 @@ const handleConfirm = () => {
         {/* CTA Footer */}
         <CardFooter className="relative z-10 mt-4 flex justify-end">
           <Button
-            onClick={() => handleNavigation(p.id)}
+            onClick={() => handleNavigation(p.projectId)}
             className="bg-cyan-500 hover:bg-cyan-600 text-white font-semibold rounded-full px-5 py-2 shadow-lg transition-all duration-300"
           >
             🔍 Explore

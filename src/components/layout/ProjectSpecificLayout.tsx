@@ -1,19 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { NavLink, Outlet, useLocation, useParams } from 'react-router-dom';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Projector,Group,WorkflowIcon,LayoutDashboard ,NotebookPenIcon,LucideWorkflow,PercentDiamondIcon,TreePalm, Rotate3D} from 'lucide-react';
 
 export default function ProjectSpecificLayout() {
   const location = useLocation();
   const { theme } = useTheme();
-
+ const { projectId } = useParams(); 
   // Step 1: Get id from state OR localStorage
-  const [projectId, setProjectId] = useState(location.state?.id || localStorage.getItem('currentProjectId'));
-
+ 
   useEffect(() => {
     if (location.state?.id) {
-      setProjectId(location.state.id);
-      localStorage.setItem('currentProjectId', location.state.id); // persist for nested routes
+    
+      localStorage.setItem('currentProjectId', projectId); // persist for nested routes
     }
   }, [location.state]);
 
