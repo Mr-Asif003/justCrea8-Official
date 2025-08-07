@@ -184,9 +184,18 @@ const handleDeleteConfirm = async () => {
         </div>
       </section>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+      <div className="">
         {teams.map((team) => (
-          <Card key={team.id} className="bg-background/60 mt-4 hover:bg-background/90 backdrop-blur-sm transition-all shadow-md  hover:translate-y-2 bg-gradient-to-br border hover:border-sky-400  hover:shadow-purple-500  ">
+ <Card
+  key={team.id}
+  className={`mt-4 transition-all duration-300 ease-in-out transform border rounded-xl p-4 shadow-md backdrop-blur-sm
+    ${theme === 'dark' 
+      ? 'bg-gradient-to-r from-black to-gray-900 border-white/20 text-white' 
+      : 'bg-white/10 text-black'}
+    hover:scale-[0.94] hover:shadow-md hover:shadow-cyan-500 hover:brightness-105`}
+>
+
+
             <CardContent className="flex items-center justify-end p-2">
         
               <div className="flex items-center gap-2">
@@ -236,7 +245,7 @@ const handleDeleteConfirm = async () => {
               </Button>
               <Button
                 onClick={() => handleNavigation(team.id)}
-                className="text-xs px-4 py-1 bg-cyan-600 hover:bg-cyan-700 text-white"
+                className="text-xs px-4 py-1 bg-cyan-600 hover:bg-cyan-700 transition-all transform ease-in-out duration-500 text-white hover:px-12"
               >
                 View
               </Button>

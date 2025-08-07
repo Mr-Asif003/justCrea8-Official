@@ -10,10 +10,10 @@ import { toast } from 'sonner';
 import { Label } from '@/components/ui/label';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 
-const ProjectSettings = () => {
-  const location = useLocation();
+const ProjectSettings = ({projectDetails}) => {
+ 
   const navigate = useNavigate();
-  const { projectId, teamId } = location.state || {};
+   
   const [projectData, setProjectData] = useState(null);
   const [teamMembers, setTeamMembers] = useState([]);
   const [newMemberUid, setNewMemberUid] = useState('');

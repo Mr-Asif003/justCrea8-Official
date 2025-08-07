@@ -18,7 +18,16 @@ import CreateProjectDialog from "./projectWorkspace.tsx/CreateProjectDialog";
 import JoinProjectDialog from "./projectWorkspace.tsx/JoinProjectDailog";
 import { Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 import SpecificTeamMembers from "./SpecificTeamMembers";
-
+import {
+  Layers,
+  CheckCircle,
+  Rocket,
+  Book,
+  Sparkles,
+  Zap,
+  Trophy
+} from 'lucide-react';
+import { motion } from 'framer-motion';
 export default function SpecificTeams() {
   const { theme } = useTheme();
   const navigate = useNavigate();
@@ -33,6 +42,14 @@ export default function SpecificTeams() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [confirm, setConfirm] = useState(false);
 
+
+   const floatingIcons = [
+    { icon: Sparkles, delay: 0, x: 20, y: 30 },
+    { icon: Zap, delay: 1, x: 80, y: 60 },
+    { icon: Rocket, delay: 1, x: 40, y: 60 },
+    { icon: Book, delay: 1, x: 6, y: 70 },
+    { icon: Trophy, delay: 3, x: 85, y: 20 },
+  ];
   // 🔁 Fetch team data and members
   useEffect(() => {
     const fetchTeam = async () => {
@@ -99,7 +116,7 @@ const handleConfirm = () => {
   };
 
   const handleNavigation = (projectId) => {
-    alert(projectId)
+  
   navigate(`./${projectId}`, {
     state: {
       pId: projectId,
@@ -246,15 +263,35 @@ const handleConfirm = () => {
 
       {/* PROJECT CARDS */}
       <section className="rounded-xl p-6 shadow-xl">
+          
         <h2 className="text-2xl font-bold text-cyan-500 mb-6 font-mono">🚀 Team Projects</h2>
-        <div className="flex flex-wrap gap-6 justify-center transition-all duration-500">
+        <div className="w-full flex flex-col gap-6 justify-center transition-all duration-500">
   {projectData.map((p, i) => (
     <div
       key={i}
-      className="group relative w-full md:w-[30%] hover:scale-[0.93] transition-all duration-700 ease-in-out"
+      className="group relative w-full  hover:scale-[0.93] transition-all duration-700 ease-in-out"
     >
+      
       <Card className="relative overflow-hidden h-full  shadow-md rounded-2xl transition-all duration-500 group-hover:shadow-cyan-500/30 hover:scale-[1.01] backdrop-blur-md">
-        
+          {floatingIcons.map((item, index) => (
+          <motion.div
+            key={index}
+            className="absolute pointer-events-none z-0"
+            style={{ left: `${item.x}%`, top: `${item.y}%` }}
+            animate={{
+              y: [0, -20, 0],
+              rotate: [0, 360],
+              scale: [1, 1.2, 1],
+            }}
+            transition={{
+              duration: 4,
+              repeat: Infinity,
+              delay: item.delay,
+            }}
+          >
+            <item.icon className="h-8 w-8 text-cyan-400/40" />
+          </motion.div>
+        ))}
         {/* Decorative Glow Circle */}
         <div className="absolute -top-10 -left-10 w-40 h-40 bg-cyan-400 opacity-10 rounded-full blur-3xl group-hover:scale-125 transition-transform duration-700" />
 

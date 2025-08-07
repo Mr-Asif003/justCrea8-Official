@@ -104,8 +104,14 @@ export default function Project({projectDetails}) {
       </section>
           <div className="text-xs text-gray-400 mt-2 text-center px-[30%]">
             <p className='text-xl bg-transparent border-b-2 border-orange-500 p-4'>🔗 Project Link: {projectDetails.projectId}</p>
-            {user==projectDetails.teamAdmin.uid||user==projectDetails.projectManager.uid&&(
+            {user==projectDetails.projectManager.uid&&(
             <p>🔒 Master Key: {projectDetails.password}</p>
+            
+
+            )}
+             {user==projectDetails.teamAdmin.uid&&(
+            <p>🔒 Master Key: {projectDetails.password}</p>
+            
 
             )}
           </div>

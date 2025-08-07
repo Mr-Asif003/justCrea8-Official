@@ -37,6 +37,7 @@ import { useParams } from "react-router-dom";
 import { db } from "@/Firebase/firebaseConfig";
 import { getDoc, doc } from "firebase/firestore";
 import { toast } from "sonner";
+import ProjectSettings from "../projectPages/projectWorkspace.tsx/ProjectSetting";
 
 export default function ProjectHome() {
   const [mainTab, setMainTab] = useState("overview");
@@ -244,11 +245,23 @@ export default function ProjectHome() {
           >
             🛠️ WorkHouse
           </TabsTrigger>
+            <TabsTrigger
+            value="setting"
+            className="text-sm md:text-base font-medium px-4 py-2 rounded-lg hover:bg-accent flex items-center gap-2"
+          >
+             ⚙️ Setting
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview">{renderSidebarLayout("overview")}</TabsContent>
         <TabsContent value="planner">{renderSidebarLayout("planner")}</TabsContent>
         <TabsContent value="workspace">{renderSidebarLayout("workspace")}</TabsContent>
+        <TabsContent value="setting">
+          <ProjectSettings
+        projectDetails={projectDetails}
+/>
+
+        </TabsContent>
       </Tabs>
     </div>
   );

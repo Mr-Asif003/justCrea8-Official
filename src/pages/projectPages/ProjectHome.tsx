@@ -48,8 +48,10 @@ export default function ProjectHome() {
       navigate('/help'); // correct usage
     }
   }, [numOfProjects, navigate]);
-
-
+const user=auth.currentUser.displayName
+const handleClick=()=>{
+  navigate(`./${user}`)
+}
 
 
   const navItems = [
@@ -131,7 +133,9 @@ export default function ProjectHome() {
             </div>
           </div>
           <div className="w-1/3 flex justify-center items-center">
-            <img src={heroImg} className="rounded-full h-20 w-20 object-cover" alt="user" />
+            <div className="w-20 h-20 rounded-full flex items-center justify-center animate-bounce">
+              <h1 className='text-4xl'>🤨</h1>
+            </div>
           </div>
         </div>
 
@@ -142,7 +146,7 @@ export default function ProjectHome() {
             <p className="text-xs">Start building your ideas</p>
           </div>
           <div className="p-2">
-            <button className="size-14 bg-black hover:animate-spin rounded-full flex items-center justify-center hover:bg-gray-700 transition-transform duration-300">
+            <button onClick={handleClick} className="size-14 bg-black hover:animate-spin rounded-full flex items-center justify-center hover:bg-gray-700 transition-transform duration-300">
               <CirclePlus size={20} color='white' className="hover:animate-spin" />
             </button>
           </div>
@@ -176,27 +180,13 @@ export default function ProjectHome() {
                 <p className="text-sm">via Link</p>
               </div>
               <button
-                onClick={() => setJoinBtnClicked(!joinBtnClicked)}
+                onClick={handleClick}
                 className="bg-purple-700 h-10 px-4 rounded-xl hover:bg-purple-900 transition-all"
               >
-                {joinBtnClicked ? "Close" : "Join"}
               </button>
             </div>
 
-            {joinBtnClicked && (
-              <div className="mt-4 space-y-3">
-                <Input
-                  placeholder="Enter Joining Link"
-                  value={joinProjectLink}
-                  onChange={(e) => setJoinProjectLink(e.target.value)}
-                />
-                <Input placeholder="Enter Project Password" type="password" autoComplete="false" />
-                <Input placeholder="Enter Master Key" type="number" />
-                <button className="bg-purple-600 hover:bg-purple-800 text-white py-2 px-4 rounded-xl mt-2">
-                  Submit
-                </button>
-              </div>
-            )}
+          
           </div>
 
           {/* Icons */}
