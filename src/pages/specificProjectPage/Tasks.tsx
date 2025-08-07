@@ -45,7 +45,7 @@ useEffect(() => {
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-  console.log(projectDetails,'sdf')
+ 
 
 const handleCreateTask = async (taskData: any) => {
   const newTask: Task = {
@@ -69,7 +69,7 @@ const handleCreateTask = async (taskData: any) => {
      toast.success('Task create successfully..')
     setIsCreateDialogOpen(false);
   } catch (error) {
-    console.error('Error adding task to Firestore:', error);
+    console.log('Error adding task to Firestore:', error);
      toast.error('error  in creating')
     // You can show a toast here if needed
   }
@@ -99,7 +99,7 @@ const handleUpdateTask = async (taskId: string, updatedData: any) => {
      toast.success('Task update successfully..')
     setSelectedTask(null);
   } catch (error) {
-    console.error('Error updating task:', error);
+    console.log('Error updating task:', error);
     toast.error('Error in updating')
     // Add toast or error handler if needed
   }
@@ -118,7 +118,7 @@ const handleDeleteTask = async (taskId: string) => {
    toast.success('Task delete successfully..')
     setTasks(updatedTasks);
   } catch (error) {
-    console.error('Error deleting task:', error);
+    console.log('Error deleting task:', error);
     toast.error('Error in deleting')
     // Add toast or error handler if needed
   }

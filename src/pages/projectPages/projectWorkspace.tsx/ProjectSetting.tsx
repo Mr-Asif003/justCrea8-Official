@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
-import { db } from '@/Firebase/firebaseConfig';
+import { auth, db } from '@/Firebase/firebaseConfig';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -13,7 +13,8 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@
 const ProjectSettings = ({projectDetails}) => {
  
   const navigate = useNavigate();
-   
+   const projectId=projectDetails.projectId
+   const teamId=projectDetails.teamId
   const [projectData, setProjectData] = useState(null);
   const [teamMembers, setTeamMembers] = useState([]);
   const [newMemberUid, setNewMemberUid] = useState('');
@@ -36,14 +37,19 @@ const ProjectSettings = ({projectDetails}) => {
           toast.error('Project or Team not found');
         }
       } catch (err) {
-        console.error(err);
+        console.log(err);
         toast.error('Failed to load data');
       }
     };
     fetchData();
   }, [projectId, teamId]);
-
+  const currentUserUid=auth.currentUser.uid
   const handleUpdate = async () => {
+
+    if(currentUserUid!=projectData.teamAdmin.uid&&currentUserUid!=projectData.projectManager.uid){
+      toast.error('Only project manager and Admin can update details..')
+      return
+    }
     try {
       await updateDoc(doc(db, 'projects', projectId), {
         projectName: projectData.projectName,
@@ -51,10 +57,11 @@ const ProjectSettings = ({projectDetails}) => {
       });
       toast.success('Project updated');
     } catch (err) {
-      console.error(err);
+      console.log(err);
       toast.error('Failed to update project');
     }
   };
+  console.log(teamMembers,'adsfdaf')
 
   const handleDelete = async () => {
     const confirmed = confirm('Are you sure you want to delete this project?');
@@ -64,45 +71,93 @@ const ProjectSettings = ({projectDetails}) => {
       toast.success('Project deleted');
       navigate('/project/home');
     } catch (err) {
-      console.error(err);
+      console.log(err);
       toast.error('Failed to delete project');
     }
   };
 
   const handleAddMember = async () => {
-    if (!newMemberUid) return toast.error('Select a member');
-    try {
-      const userSnap = await getDoc(doc(db, 'users', newMemberUid));
-      const userData = userSnap.data();
-      if (!userSnap.exists()) return toast.error('User not found');
-
-      const updatedMembers = [...(projectData.projectMembers || []), {
-        uid: newMemberUid,
-        name: userData.name,
-        email: userData.email,
-      }];
-      const updatedUids = [...(projectData.memberUids || []), newMemberUid];
-
-      await updateDoc(doc(db, 'projects', projectId), {
-        projectMembers: updatedMembers,
-        memberUids: updatedUids,
-      });
-
-      setProjectData(prev => ({
-        ...prev,
-        projectMembers: updatedMembers,
-        memberUids: updatedUids,
-      }));
-
-      setNewMemberUid('');
-      toast.success('Member added');
-    } catch (err) {
-      console.error(err);
-      toast.error('Failed to add member');
+     if(currentUserUid!=projectData.teamAdmin.uid&&currentUserUid!=projectData.projectManager.uid){
+      toast.error('Only project manager and Admin can update details..')
+      return
     }
-  };
+  if (!newMemberUid) return toast.error("Please select a member");
+
+  const newMemberRaw = teamMembers.find((m) => m.uid === newMemberUid);
+  if (!newMemberRaw) return toast.error("Invalid member selected");
+
+  try {
+    const snap = await getDoc(doc(db, "users", newMemberUid));
+    const user = snap.exists() ? snap.data() : {};
+
+    const newMember = {
+      uid: newMemberUid,
+      name: (user.firstName || "") + " " + (user.lastName || "") || newMemberRaw.name,
+      email: user.email || newMemberRaw.email,
+    };
+
+    const updatedMembers = [...(projectData.projectMembers || []), newMember];
+    const updatedUids = [...(projectData.memberUids || []), newMemberUid];
+
+    await updateDoc(doc(db, "projects", projectData.projectId), {
+      projectMembers: updatedMembers,
+      memberUids: updatedUids,
+    });
+
+    setProjectData((prev) => ({
+      ...prev,
+      projectMembers: updatedMembers,
+      memberUids: updatedUids,
+    }));
+
+    setNewMemberUid("");
+    toast.success("✅ Member added to project");
+  } catch (err) {
+    console.error(err);
+    toast.error("❌ Failed to add member");
+  }
+};
+
+
 
   if (!projectData) return <div className="text-center mt-20">Loading...</div>;
+
+  const handleDeleteProjectMember = async (memberUidToRemove) => {
+  if (!projectDetails?.projectId) {
+    toast.error("Project ID is missing");
+    return;
+  }
+
+  try {
+    const projectRef = doc(db, "projects", projectDetails.projectId);
+    const projectSnap = await getDoc(projectRef);
+
+    if (!projectSnap.exists()) {
+      toast.error("Project not found");
+      return;
+    }
+
+    const projectData = projectSnap.data();
+
+    const updatedProjectMembers = projectData.projectMembers.filter(
+      (member) => member.uid !== memberUidToRemove
+    );
+    const updatedMemberUids = projectData.memberUids.filter(
+      (uid) => uid !== memberUidToRemove
+    );
+
+    await updateDoc(projectRef, {
+      projectMembers: updatedProjectMembers,
+      memberUids: updatedMemberUids,
+    });
+
+    toast.success("Member removed successfully");
+  } catch (error) {
+    console.error("Error removing project member:", error);
+    toast.error("Failed to remove member");
+  }
+};
+
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
@@ -137,7 +192,7 @@ const ProjectSettings = ({projectDetails}) => {
               </SelectTrigger>
               <SelectContent>
                 {teamMembers.map((member) => (
-                  <SelectItem key={member.uid} value={member.uid}>
+                  <SelectItem key={member.uid} value={member.uid} >
                     {member.name} ({member.email})
                   </SelectItem>
                 ))}
@@ -158,6 +213,27 @@ const ProjectSettings = ({projectDetails}) => {
           </ul>
         </div>
       </Card>
+       <Card className="p-6 space-y-4 border shadow-sm">
+        {projectDetails?.projectMembers?.map((member) => (
+  <div
+    key={member.uid}
+    className="flex justify-between items-center p-2 border-b"
+  >
+    <div>
+      <p className="font-medium">{member.name}</p>
+      <p className="text-sm text-muted-foreground">{member.email}</p>
+    </div>
+    <Button
+      variant="destructive"
+      size="sm"
+      onClick={() => handleDeleteProjectMember(member.uid)}
+    >
+      Remove
+    </Button>
+  </div>
+))}
+
+       </Card>
     </div>
   );
 };

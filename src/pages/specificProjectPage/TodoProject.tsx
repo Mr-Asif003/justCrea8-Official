@@ -150,7 +150,7 @@ export default function TodoProject({ projectDetails }: { projectDetails: any })
       setNewTodo("");
       toast({ title: "Task Added", description: "Todo added to project." });
     } catch (error) {
-      console.error("Error adding todo:", error);
+      console.log("Error adding todo:", error);
       toast({
         title: "Error",
         description: "Failed to add task.",

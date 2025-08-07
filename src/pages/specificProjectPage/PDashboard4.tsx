@@ -68,7 +68,7 @@ export default function ProjectDashboard({ projectDetails, projectId }: ProjectD
       toast.success("✅ Project updated");
       setEditing(false);
     } catch (err) {
-      console.error(err);
+      console.log(err);
       toast.error("❌ Failed to update project");
     }
   };

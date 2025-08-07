@@ -199,7 +199,7 @@ useEffect(() => {
         if (data.engineeringPrinciples) setEngineeringPrinciples(data.engineeringPrinciples);
       }
     } catch (err) {
-      console.error('Error fetching Firestore data:', err);
+      console.log('Error fetching Firestore data:', err);
     }
   };
 
@@ -285,7 +285,7 @@ const handleDeletePhase = async (id) => {
       sdlcPhases: updatedPhases
     });
   } catch (error) {
-    console.error("Error deleting phase:", error);
+    console.log("Error deleting phase:", error);
   }
 };
 const handleDeleteEng = async (id) => {
@@ -300,7 +300,7 @@ const handleDeleteEng = async (id) => {
       engineeringPrinciples: updatedPrinciples,
     });
   } catch (error) {
-    console.error("Error deleting engineering principle:", error);
+    console.log("Error deleting engineering principle:", error);
   }
 };
 

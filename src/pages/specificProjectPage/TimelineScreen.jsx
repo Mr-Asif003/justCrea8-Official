@@ -16,7 +16,7 @@ import { db } from '@/Firebase/firebaseConfig';
 
 export default function TimelineScreen({projectDetails}) {
   // Default phases
-  console.log(projectDetails)
+ 
   const [phases, setPhases] = useState([
     'Requirement Analysis',
     'System Design',
@@ -62,7 +62,7 @@ export default function TimelineScreen({projectDetails}) {
         description: '',
       });
     } catch (e) {
-      console.error(e);
+      console.log(e);
       toast.error('Error adding timeline');
     }
   } else {

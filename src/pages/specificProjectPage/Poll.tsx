@@ -184,7 +184,7 @@ const Poll = ({ projectDetails, projectMemberDetails }: any) => {
       toast.success("Poll created successfully!");
     } catch (e) {
       toast.error("Error creating poll. Try again later.");
-      console.error("Poll creation error:", e);
+      console.log("Poll creation error:", e);
     }
   };
 
@@ -205,7 +205,7 @@ const Poll = ({ projectDetails, projectMemberDetails }: any) => {
       await updateDoc(projectRef, { polls: filteredPolls });
       toast.success("Poll deleted successfully");
     } catch (err) {
-      console.error("Failed to delete poll:", err);
+      console.log("Failed to delete poll:", err);
       toast.error("Error deleting poll");
     }
   };
@@ -255,7 +255,7 @@ const Poll = ({ projectDetails, projectMemberDetails }: any) => {
       await updateDoc(projectRef, { polls: updatedPolls });
       toast.success("Vote submitted!");
     } catch (err) {
-      console.error("Error updating vote:", err);
+      console.log("Error updating vote:", err);
       toast.error("Failed to submit vote");
     }
   };
@@ -268,7 +268,7 @@ const Poll = ({ projectDetails, projectMemberDetails }: any) => {
       : [];
 
     if (!Array.isArray(existingDecisions)) {
-      console.error("existingDecisions is not an array:", existingDecisions);
+      console.log("existingDecisions is not an array:", existingDecisions);
       toast.error("Unexpected error with decisions data.");
       return;
     }
@@ -295,7 +295,7 @@ const Poll = ({ projectDetails, projectMemberDetails }: any) => {
       setDecisions(updatedDecisions);
       toast.success("Decision added successfully!");
     } catch (e) {
-      console.error("Failed to add decision:", e);
+      console.log("Failed to add decision:", e);
       toast.error("Error adding decision");
     }
   };
@@ -309,7 +309,7 @@ const Poll = ({ projectDetails, projectMemberDetails }: any) => {
 
     toast.success("Decision deleted successfully");
   } catch (err) {
-    console.error("Failed to delete decision:", err);
+    console.log("Failed to delete decision:", err);
     toast.error("Error deleting decision");
   }
 };

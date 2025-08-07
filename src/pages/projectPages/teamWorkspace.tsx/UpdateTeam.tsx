@@ -105,15 +105,17 @@ export default function UpdateTeam() {
       const oldData = snap.data();
 
       await updateDoc(teamRef, {
-        teamName: form.teamName,
-        teamDesc: form.teamDesc,
-        password: form.password,
-        members: {
-          ...oldData.members,
-          contributors: form.contributors.map((email) => ({ email })),
-          mentors: form.mentors.map((email) => ({ email })),
-        },
-      });
+  teamName: form.teamName,
+  teamDesc: form.teamDesc,
+  password: form.password,
+  memberEmails: Array.isArray(oldData.memberEmails)
+    ? [...oldData.memberEmails, ...form.contributors]
+    : form.contributors,
+  members: {
+    contributors: form.contributors.map((email) => ({ email })),
+    mentors: form.mentors.map((email) => ({ email })),
+  },
+});
 
       toast.success("✅ Team updated successfully!");
       navigate("/project/home");

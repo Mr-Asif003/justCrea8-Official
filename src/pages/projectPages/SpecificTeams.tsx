@@ -12,7 +12,7 @@ import TypeWriterEffect from "react-typewriter-effect";
 import { User, CalendarClock, CheckCircle2, CirclePlus, MapPin, Calendar, Users } from "lucide-react";
 import { toast } from "sonner";
 import { doc, getDoc } from "firebase/firestore";
-import { db } from "@/Firebase/firebaseConfig";
+import { auth, db } from "@/Firebase/firebaseConfig";
 import pm from "../../assets/images/pm.jpg";
 import CreateProjectDialog from "./projectWorkspace.tsx/CreateProjectDialog";
 import JoinProjectDialog from "./projectWorkspace.tsx/JoinProjectDailog";
@@ -41,7 +41,7 @@ export default function SpecificTeams() {
   const [openJoinDialog, setOpenJoinDialog] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [confirm, setConfirm] = useState(false);
-
+ const currentUserUid=auth.currentUser?.uid
 
    const floatingIcons = [
     { icon: Sparkles, delay: 0, x: 20, y: 30 },
@@ -73,7 +73,8 @@ export default function SpecificTeams() {
 
     if (teamId) fetchTeam();
   }, [teamId]);
-
+  console.log(teamData)
+  
   // 🔁 Fetch project data
   useEffect(() => {
     const fetchProjects = async () => {
@@ -187,7 +188,9 @@ const handleConfirm = () => {
           </div>
           <div className="text-xs text-gray-400 mt-2">
             <p>🔗 Team ID: {teamId}</p>
-            <p>🔒 Only admin has team password</p>
+           {currentUserUid==teamData?.admin[0].uid&&(
+            <p>🔒{teamData?.password} </p>
+           )} 
           </div>
         </div>
       </section>

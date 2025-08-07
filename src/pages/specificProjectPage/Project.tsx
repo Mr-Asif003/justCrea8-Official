@@ -15,7 +15,7 @@ import EraLogoComponent from '../projectPages/EraLogoComponent';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import Countdown from '../../components/projectSpecificComponents/Countdown';
+
 import ProjectTabs from '@/components/projectSpecificComponents/ProjectTabs';
 import { motion } from 'framer-motion';
 import { ProjectTimeline } from '@/components/project/ProjectTimeline';
@@ -28,7 +28,7 @@ export default function Project({projectDetails}) {
   const location = useLocation();
   const { theme } = useTheme();
   const { projectId } = location.state || {};
-  console.log(projectDetails,'sflksjf')
+ 
   const user=auth.currentUser.uid
 
   const metrics = [
@@ -173,12 +173,12 @@ export default function Project({projectDetails}) {
         </div>
         <div className="w-full md:w-1/3 flex flex-col gap-4">
           <ProjectInfo  pd={projectDetails}/>
-          <Countdown />
+          
         </div>
       </section>
 
       {/* Team Members & Stats */}
-      <section className="bg-gradient-to-br border border-cyan-500/30 rounded-xl p-6 text-white space-y-6">
+      {/* <section className="bg-gradient-to-br border border-cyan-500/30 rounded-xl p-6 text-white space-y-6">
         <div className="flex flex-col items-center gap-4">
           <h3 className="text-xl font-semibold text-cyan-400">Team Members</h3>
           <div className="flex flex-wrap justify-center gap-3">
@@ -205,7 +205,7 @@ export default function Project({projectDetails}) {
             </div>
           ))}
         </div>
-      </section>
+      </section> */}
     </div>
   );
 }

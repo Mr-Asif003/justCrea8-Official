@@ -92,7 +92,7 @@ export default function NoteProject({ projectDetails, setProjectDetails }) {
       toast({ title: editingNote ? "Note Updated" : "Note Added" });
       resetForm();
     } catch (error) {
-      console.error("Error saving note:", error);
+      console.log("Error saving note:", error);
       toast({ title: "Error", description: "Could not save note", variant: "destructive" });
     }
   };
@@ -107,7 +107,7 @@ export default function NoteProject({ projectDetails, setProjectDetails }) {
       }));
       toast({ title: "Deleted", description: "Note removed." });
     } catch (err) {
-      console.error(err);
+      console.log(err);
     }
   };
 

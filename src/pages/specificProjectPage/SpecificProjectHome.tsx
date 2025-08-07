@@ -67,8 +67,8 @@ export default function ProjectHome() {
     const a = projectDetails.admin || {};
     const pa = projectDetails.projectAdmin || {};
     const pm = projectDetails.projectManager || {};
-    const contributors = Array.isArray(projectDetails.contributors)
-      ? projectDetails.contributors
+    const contributors = Array.isArray(projectDetails.projectMembers)
+      ? projectDetails.projectMembers
       : [];
 
     const final = [];
@@ -123,7 +123,7 @@ export default function ProjectHome() {
         value: "team",
         icon: Group,
         component: (
-          <ProjectMembers projectMembersDetails={projectMembersDetails} />
+          <ProjectMembers projectMembersDetails={projectMembersDetails} teamAdmin={projectDetails?.teamAdmin}/>
         ),
       },
     ],

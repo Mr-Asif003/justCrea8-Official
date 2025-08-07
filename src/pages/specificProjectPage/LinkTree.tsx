@@ -70,7 +70,7 @@ export default function LinkTreeCardGrid({ projectDetails }: Props) {
           setLinks(data.links || []);
         }
       } catch (err) {
-        console.error("Error fetching links", err);
+        console.log("Error fetching links", err);
       }
     };
 
@@ -83,7 +83,7 @@ export default function LinkTreeCardGrid({ projectDetails }: Props) {
       toast.success("Links updated");
     } catch (err) {
       toast.error("Failed to update links");
-      console.error(err);
+      console.log(err);
     }
   };
 
