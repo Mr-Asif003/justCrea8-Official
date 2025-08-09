@@ -10,7 +10,7 @@ export default function WebsiteInfoPage() {
     <h2 className="text-2xl font-semibold mb-3">🌟 Our Vision</h2>
     <p className="text-base leading-relaxed">
       JustCrea8 was born out of the belief that <strong>creativity thrives when collaboration is frictionless</strong>.
-      Our platform empowers developers, designers, and digital creators to <span className="text-blue-600 dark:text-blue-400">connect, build, and launch</span> real-world projects — together.
+      Our platform empowers khanelopers, designers, and digital creators to <span className="text-blue-600 dark:text-blue-400">connect, build, and launch</span> real-world projects — together.
     </p>
   </section>
 
@@ -61,10 +61,10 @@ export default function WebsiteInfoPage() {
       I believe that creativity shouldn't be siloed — it should be shared, refined, and launched with a team. My goal with JustCrea8 is to make project collaboration feel natural, intentional, and fulfilling.
     </p>
     <div className="mt-4 text-sm text-muted-foreground space-y-1">
-      <p><strong>Email:</strong> <a href="mailto:asif@example.com" className="text-blue-600 dark:text-blue-400 hover:underline">asif@example.com</a></p>
-      <p><strong>LinkedIn:</strong> <a href="https://linkedin.com/in/asif-dev" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline">linkedin.com/in/asif-dev</a></p>
-      <p><strong>GitHub:</strong> <a href="https://github.com/asifdev" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline">github.com/asifdev</a></p>
-      <p><strong>Portfolio:</strong> <a href="" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline">asifdev.com</a></p>
+      <p><strong>Email:</strong> <a href="mailto:asifkhan.tech.2003@gmail.com" className="text-blue-600 dark:text-blue-400 hover:underline">asifkhan.tech.2003@gmail.com.com</a></p>
+      <p><strong>LinkedIn:</strong> <a href="https://www.linkedin.com/in/asif-khan003" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline">linkedin.com/in/asifkhan</a></p>
+      <p><strong>GitHub:</strong> <a href="https://github.com/Mr-Asif003" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline">github.com/asifkhan</a></p>
+      <p><strong>Portfolio:</strong> <a href="" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline">asifkhan.com</a></p>
     </div>
   </section>
 

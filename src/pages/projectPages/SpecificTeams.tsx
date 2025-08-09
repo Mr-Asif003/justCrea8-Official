@@ -18,7 +18,7 @@ import CreateProjectDialog from "./projectWorkspace.tsx/CreateProjectDialog";
 import JoinProjectDialog from "./projectWorkspace.tsx/JoinProjectDailog";
 import { Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 import SpecificTeamMembers from "./SpecificTeamMembers";
-import TeamAnnouncement from "./teamAnnouncement";
+import TeamAnnouncement from "./TeamAnnouncement";
 import {
   Layers,
   CheckCircle,
