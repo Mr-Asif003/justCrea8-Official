@@ -113,7 +113,7 @@ const handleClick=()=>{
           </p>
         </div>
       </section>
-      <div className={`w-1/2 gap-4  backdrop-blur-xl bg-white/10 border border-white/30 shadow-md p-4 flex items-center justify-around rounded-xl border-cyan-600 shadow-purple-700 animate-pulse  ${theme === "dark" ? 'bg-gradient-to-r from-black to-gray-800' : ''}`}>
+      <div className={`w-full md:w-1/2 gap-4  backdrop-blur-xl bg-white/10 border border-white/30 shadow-md p-4 flex items-center justify-around rounded-xl border-cyan-600 shadow-purple-700 animate-pulse  ${theme === "dark" ? 'bg-gradient-to-r from-black to-gray-800' : ''}`}>
          <p>If you have already created project ? 
           </p>       
             <button onClick={handleClick} className="size-14 bg-black hover:animate-pulse rounded-full flex items-center justify-center hover:bg-gray-700 transition-transform duration-300">

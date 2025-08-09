@@ -166,12 +166,12 @@ export default function ProjectHome() {
         icon: TreePalm,
         component:<GDHome projectDetails={projectDetails}/>,
       },
-      {
-        label: "Chat",
-        value: "chat",
-        icon: MessagesSquare,
-        component: <TeamChatWithPoll />,
-      },
+      // {
+      //   label: "Chat",
+      //   value: "chat",
+      //   icon: MessagesSquare,
+      //   component: <TeamChatWithPoll />,
+      // },
       {
         label: "Poll",
         value: "poll",

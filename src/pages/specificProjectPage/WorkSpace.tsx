@@ -326,8 +326,8 @@ const handleDeleteEng = async (id) => {
           </div>
         </div>
 
-        <Tabs defaultValue="sdlc" className="w-full">
-          <TabsList className="w-full flex justify-around">
+        <Tabs defaultValue="sdlc" className="w-full p-2 mb-20  gap-40">
+          <TabsList className="  md:max-w-5  justify-around flex flex-col md:flex-row mb-32">
             <TabsTrigger value="sdlc">SDLC Management</TabsTrigger>
             <TabsTrigger value="roadmap">Roadmap</TabsTrigger>
             <TabsTrigger value="principles">Engineering Principles</TabsTrigger>
@@ -335,7 +335,7 @@ const handleDeleteEng = async (id) => {
 
           </TabsList>
 
-          <TabsContent value="sdlc" className="space-y-6">
+          <TabsContent value="sdlc" className=" mb-20">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-semibold">Software Development Life Cycle</h2>
               <Dialog open={showCreatePhase} onOpenChange={setShowCreatePhase}>
@@ -345,7 +345,7 @@ const handleDeleteEng = async (id) => {
                     Add Phase
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className='w-full'>
                   <DialogHeader>
                     <DialogTitle>Create New SDLC Phase</DialogTitle>
                   </DialogHeader>
