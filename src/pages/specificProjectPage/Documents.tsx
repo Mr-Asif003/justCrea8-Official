@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
+import { Alert } from '@/components/ui/alert';
 
 const initialDocs = [
   {
@@ -58,10 +59,14 @@ export default function Documents() {
 
   return (
     <div className="px-6 md:px-12 py-10 space-y-8">
-      <div className="flex justify-between items-center">
+
+      <Alert className='text-yellow-400'>Work is going . This feature will Come soon ...</Alert>
+      {/* <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">📄 Project Documents</h2>
         <Input type="file" onChange={handleFileUpload} className="max-w-xs" />
       </div>
+
+      
 
       <div className="flex items-center gap-4">
         <Input
@@ -147,7 +152,7 @@ export default function Documents() {
         <div className="text-center text-gray-400 mt-20">
           No documents found.
         </div>
-      )}
+      )} */}
     </div>
   );
 }

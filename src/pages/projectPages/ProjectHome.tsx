@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import heroImgbg from '../../assets/images/heroImg4.jpg';
 import heroImg from '../../assets/images/heroImg3.jpg';
 import { useTheme } from '@/contexts/ThemeContext';
-import { ChartNoAxesCombined, CirclePlus, Info, Headset, CircleUser } from 'lucide-react';
+import { ChartNoAxesCombined, CirclePlus, Info, Headset, CircleUser, ArrowBigRight } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import TypeWriterEffect from 'react-typewriter-effect';
 import InfiniteCarousel from '@/components/ui/projectUi/ProjectFeature';
@@ -48,7 +48,7 @@ export default function ProjectHome() {
       navigate('/help'); // correct usage
     }
   }, [numOfProjects, navigate]);
-const user=auth.currentUser.displayName
+const user=auth.currentUser?.displayName
 const handleClick=()=>{
   navigate(`./${user}`)
 }
@@ -57,7 +57,7 @@ const handleClick=()=>{
   const navItems = [
     { icon: CircleUser, path:`/account`, label: 'Project Account' },
     { icon: Info, path: '/project/info', label: 'Project Info' },
-    { icon: Info, path: '/not', label: 'Notifications' },
+
     { icon: Headset, path: '/help', label: 'Help & Support' },
   ];
   const mySteps = [
@@ -83,6 +83,7 @@ const handleClick=()=>{
     <div className="w-full px-4 sm:px-4 md:px-6 xl:px-12 2xl:px-25 mb-10 mt-4 space-y-8">
      
       {/* Header */}
+      
       {/* Hero Section */}
       <section className="relative w-full py-12 flex flex-col md:flex-row items-center justify-between overflow-hidden shadow-lg rounded-xl bg-black">
         <div className="absolute inset-0 z-0">
@@ -112,7 +113,13 @@ const handleClick=()=>{
           </p>
         </div>
       </section>
-
+      <div className={`w-1/2 gap-4  backdrop-blur-xl bg-white/10 border border-white/30 shadow-md p-4 flex items-center justify-around rounded-xl border-cyan-600 shadow-purple-700 animate-pulse  ${theme === "dark" ? 'bg-gradient-to-r from-black to-gray-800' : ''}`}>
+         <p>If you have already created project ? 
+          </p>       
+            <button onClick={handleClick} className="size-14 bg-black hover:animate-pulse rounded-full flex items-center justify-center hover:bg-gray-700 transition-transform duration-300">
+             <ArrowBigRight  className=''/>
+            </button>
+      </div>
       {/* Welcome + Create Project Section */}
       <section className={`flex flex-col sm:flex-row gap-4 ${theme === "dark" ? 'text-white' : 'text-black'}`}>
         {/* Welcome Card */}
@@ -138,6 +145,8 @@ const handleClick=()=>{
             </div>
           </div>
         </div>
+                
+
 
         {/* Create Project Card */}
         <div className={`w-full sm:w-1/3 xl:w-1/4 backdrop-blur-xl bg-white/10 border border-white/30 shadow-2xl p-4 flex items-center justify-between rounded-xl ${theme === "dark" ? 'bg-gradient-to-r from-black to-gray-800' : ''}`}>
@@ -153,22 +162,13 @@ const handleClick=()=>{
         </div>
       </section>
 
+
       {/* Join Project + Carousel Section */}
       <section className="flex flex-col md:flex-row gap-4">
         {/* Carousel / Info Section */}
         <div className={`w-full md:w-2/3 xl:w-3/4 backdrop-blur-xl bg-white/10 border border-white/30 text-white shadow-2xl rounded-xl ${theme === "dark" ? 'bg-gradient-to-r from-black to-gray-800' : ''}`}>
           <InfiniteCarousel features={projectFeatures} />
-          {joinBtnClicked && (
-            <div className="px-4 py-10">
-              <TypeWriterEffect
-                textStyle={{ fontFamily: 'Red Hat Display', fontSize: '18px' }}
-                startDelay={100}
-                cursorColor="cyan"
-                text="You are trying to join someone's project via link. Initially, you're joining as a team member. You won't have admin rights or delete permissions."
-                typeSpeed={50}
-              />
-            </div>
-          )}
+         
         </div>
 
         {/* Join Project Card */}
@@ -179,11 +179,10 @@ const handleClick=()=>{
                 <h1 className="text-xl font-semibold">Join Team Now!</h1>
                 <p className="text-sm">via Link</p>
               </div>
-              <button
-                onClick={handleClick}
-                className="bg-purple-700 h-10 px-4 rounded-xl hover:bg-purple-900 transition-all"
-              >
-              </button>
+               <button onClick={handleClick} className="size-14 bg-black hover:animate-spin rounded-full flex items-center justify-center hover:bg-gray-700 transition-transform duration-300">
+              <CirclePlus size={20} color='white' className="hover:animate-spin" />
+            </button>
+              
             </div>
 
           
@@ -226,26 +225,10 @@ const handleClick=()=>{
       {/* Footer Info Cards Section */}
       <section className={`grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 ${theme === 'dark' ? 'text-white' : 'text-black'}`}>
         {/* Profile Card */}
-        <div className={`flex flex-col items-center backdrop-blur-xl bg-white/10 border border-white/30 shadow-2xl p-4 rounded-xl ${theme === "dark" ? 'bg-gradient-to-r from-black to-gray-800' : ''}`}>
-          <h1 className="text-xl text-cyan-400 font-bold text-center mb-4">Create Your Project Account Now</h1>
-          <div className="w-full flex flex-col justify-center items-center">
-            <div className="m-4">
-              <img src={heroImg} className="rounded-full w-24 h-24 object-cover" alt="profile" />
-            </div>
-            <div className="text-center space-y-1 text-sm">
-              <h2>Asif Khan</h2>
-              <p>Github: github.com/asif</p>
-              <p>LinkedIn: <a href='https://www.linkedin.com/in/asifkhan'>asifkhan</a></p>
-              <p>LeetCode: leetcode.com/asif</p>
-              <p>HackerRank: hackerrank.com/asif</p>
-            </div>
-          </div>
-        </div>
+      
 
         {/* Placeholder Card */}
-        <div className={`flex flex-col justify-center items-center backdrop-blur-xl bg-white/10 border border-white/30 shadow-2xl p-4 rounded-xl ${theme === "dark" ? 'bg-gradient-to-r from-black to-gray-800' : ''}`}>
-          <p className="text-lg">More features coming soon...</p>
-        </div>
+       
 
         {/* Stepper Card */}
         <div className={`flex flex-col items-center backdrop-blur-xl bg-white/10 border border-white/30 shadow-2xl p-4 rounded-xl ${theme === "dark" ? 'bg-gradient-to-r from-black to-gray-800' : ''}`}>

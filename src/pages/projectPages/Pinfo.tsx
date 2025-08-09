@@ -64,7 +64,7 @@ export default function WebsiteInfoPage() {
       <p><strong>Email:</strong> <a href="mailto:asif@example.com" className="text-blue-600 dark:text-blue-400 hover:underline">asif@example.com</a></p>
       <p><strong>LinkedIn:</strong> <a href="https://linkedin.com/in/asif-dev" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline">linkedin.com/in/asif-dev</a></p>
       <p><strong>GitHub:</strong> <a href="https://github.com/asifdev" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline">github.com/asifdev</a></p>
-      <p><strong>Portfolio:</strong> <a href="https://asifdev.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline">asifdev.com</a></p>
+      <p><strong>Portfolio:</strong> <a href="" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline">asifdev.com</a></p>
     </div>
   </section>
 

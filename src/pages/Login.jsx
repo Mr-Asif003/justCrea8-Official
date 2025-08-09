@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { NavLink, Link, useNavigate } from "react-router-dom";
 import heroImgbg from "../assets/images/heroImg4.jpg";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "../Firebase/firebaseConfig.js";
 
 export default function Login() {
@@ -10,8 +10,8 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [loading, setLoading] = useState(false);
+  const [successMsg, setSuccessMsg] = useState("");
   const navigate = useNavigate();
-   
 
   const handleClose = () => {
     setShowModal(false);
@@ -19,34 +19,57 @@ export default function Login() {
   };
 
   const handleEsc = useCallback((e) => {
-    if (e.key === "Escape") toggleModal();
+    if (e.key === "Escape") setShowModal(false);
   }, []);
-  useEffect(()=>{
-    
-  })
 
   useEffect(() => {
     window.addEventListener("keydown", handleEsc);
     return () => window.removeEventListener("keydown", handleEsc);
   }, [handleEsc]);
 
-   const handleLogin = async (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    setErrorMsg('');
+    setErrorMsg("");
+    setSuccessMsg("");
+    setLoading(true);
 
     try {
       const result = await signInWithEmailAndPassword(auth, email, password);
       if (!result.user.emailVerified) {
         setErrorMsg("Please verify your email before logging in.");
+        setLoading(false);
         return;
       }
-      // After login, AuthProvider will update isLogin via onAuthStateChanged
-      navigate("/userHome"); // Optionally wait a few ms if needed
+      navigate("/userHome");
     } catch (error) {
-      if (error.code === 'auth/network-request-failed') {
-        setErrorMsg('Network error. Please check your connection.');
+      if (error.code === "auth/network-request-failed") {
+        setErrorMsg("Network error. Please check your connection.");
       } else {
-        setErrorMsg('Invalid email or password.');
+        setErrorMsg("Invalid email or password.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      setErrorMsg("Please enter your email to reset the password.");
+      return;
+    }
+    setErrorMsg("");
+    setSuccessMsg("");
+
+    try {
+      await sendPasswordResetEmail(auth, email);
+      setSuccessMsg("Password reset email sent! Check your inbox.");
+    } catch (error) {
+      if (error.code === "auth/user-not-found") {
+        setErrorMsg("No user found with this email.");
+      } else if (error.code === "auth/invalid-email") {
+        setErrorMsg("Invalid email format.");
+      } else {
+        setErrorMsg("Failed to send reset email. Try again later.");
       }
     }
   };
@@ -55,6 +78,7 @@ export default function Login() {
     <div className="relative z-50 p-4 m-4">
       {showModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm">
+          {/* Background */}
           <div className="absolute inset-0 -z-10">
             <img
               src={heroImgbg}
@@ -69,6 +93,7 @@ export default function Login() {
             />
           </div>
 
+          {/* Login Box */}
           <div className="bg-white dark:bg-[#1e1e2f] p-8 rounded-2xl shadow-2xl w-full max-w-md border dark:border-gray-700 animate-fadeIn">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-purple-600 dark:text-purple-400">Welcome Back</h2>
@@ -106,6 +131,7 @@ export default function Login() {
               </div>
 
               {errorMsg && <div className="text-sm text-red-500">{errorMsg}</div>}
+              {successMsg && <div className="text-sm text-green-500">{successMsg}</div>}
 
               <button
                 type="submit"
@@ -114,6 +140,16 @@ export default function Login() {
               >
                 {loading ? "Logging in..." : "Login"}
               </button>
+
+              <div className="text-sm text-right">
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  className="text-purple-600 hover:underline"
+                >
+                  Forgot Password?
+                </button>
+              </div>
             </form>
 
             <p className="mt-5 text-sm text-center text-gray-500 dark:text-gray-400">

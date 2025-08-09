@@ -6,7 +6,7 @@ import { TeamActions } from "@/components/team/TeamActions";
 import { TeamSidebar } from "@/components/team/TeamSidebar";
 import { SearchBar } from "@/components/team/SearchBar";
 
-const SpecificTeamMembers = ({team}) => {
+const SpecificTeamMembers = ({team,teamData}) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -47,7 +47,7 @@ const SpecificTeamMembers = ({team}) => {
 
             {/* Sidebar */}
             <div className="xl:col-span-1">
-              <TeamSidebar />
+                <TeamSidebar onClose={() => setSidebarOpen(false)} teamData={teamData} />
             </div>
           </div>
         </motion.div>
@@ -57,7 +57,7 @@ const SpecificTeamMembers = ({team}) => {
       {sidebarOpen && (
         <div className="fixed inset-0 bg-black/50 z-50 xl:hidden">
           <div className="fixed right-0 top-0 h-full w-80 bg-background border-l">
-            <TeamSidebar onClose={() => setSidebarOpen(false)} />
+            <TeamSidebar onClose={() => setSidebarOpen(false)} teamData={teamData} />
           </div>
         </div>
       )}

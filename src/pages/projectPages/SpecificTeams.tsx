@@ -18,6 +18,7 @@ import CreateProjectDialog from "./projectWorkspace.tsx/CreateProjectDialog";
 import JoinProjectDialog from "./projectWorkspace.tsx/JoinProjectDailog";
 import { Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 import SpecificTeamMembers from "./SpecificTeamMembers";
+import TeamAnnouncement from "./teamAnnouncement";
 import {
   Layers,
   CheckCircle,
@@ -181,7 +182,18 @@ const handleConfirm = () => {
 
         <div className="flex flex-col gap-2 items-start">
           <div className="w-32 h-16 overflow-hidden rounded-lg">
-            <img src={pm} alt="avatar" className="w-full h-full object-cover" />
+           <div className="relative w-full h-full rounded-lg flex justify-center items-center">
+  {/* Rotating gradient border */}
+  <div className="absolute -inset-[2px] rounded-lg p-[2px] animate-spin-slow ">
+    <div className="w-full h-full rounded-lg bg-gradient-to-r from-cyan-500 via-pink-500 to-cyan-500" />
+  </div>
+
+  {/* Content box (stays still) */}
+  <div className="relative text-sm text-cyan-200 p-4 w-[86%] h-[86%] rounded-lg bg-gradient-to-r from-black to-gray-800 shadow-md shadow-purple-600 flex items-center justify-center">
+    {teamData?.teamName || 'NA'}
+  </div>
+</div>
+
           </div>
           <div className="text-sm text-cyan-300">
             <p>👤 Admin: <strong>{teamData?.admin?.[0]?.name || "N/A"}</strong></p>
@@ -342,38 +354,28 @@ const handleConfirm = () => {
       <section className="rounded-xl p-6 shadow-xl ">
         <h1 className="text-xl font-serif text-cyan-400 mb-4">📃 Team Members</h1>
         <Tabs defaultValue="details" className="w-full">
-          <TabsList className="grid grid-cols-3 bg-muted/30">
+          <TabsList className="grid grid-cols-2 bg-muted/30">
             <TabsTrigger value="details"><User size={16} /> Details</TabsTrigger>
-            <TabsTrigger value="upcoming"><CalendarClock size={16} /> Upcoming <Badge variant="outline">3</Badge></TabsTrigger>
-            <TabsTrigger value="completed"><CheckCircle2 size={16} /> Completed</TabsTrigger>
+            <TabsTrigger value="upcoming"><CalendarClock size={16} /> Announcements <Badge variant="outline">3</Badge></TabsTrigger>
+           
           </TabsList>
 
           <TabsContent value="details" className="mt-4">
             <div className="">
-              <SpecificTeamMembers
+              <SpecificTeamMembers teamData={teamData}
 team={team}
 />
             </div>
           </TabsContent>
 
           {/* Placeholder Tabs */}
-          <TabsContent value="upcoming">
-            <Card className="border border-white/10 shadow-md">
-              <CardHeader><CardTitle className="text-yellow-400">Upcoming Tasks</CardTitle></CardHeader>
-              <CardContent className="text-sm">coming soon...</CardContent>
-            </Card>
+          <TabsContent className="w-full" value="upcoming">
+           
+             <TeamAnnouncement/>
+          
           </TabsContent>
 
-          <TabsContent value="completed">
-            <Card className="border border-white/10 shadow-md">
-              <CardHeader><CardTitle className="text-green-400">Completed Projects</CardTitle></CardHeader>
-              <CardContent className="text-sm">
-                <p>✅ User Login System</p>
-                <p>✅ Team Creation UI</p>
-                <p>✅ Firebase Auth</p>
-              </CardContent>
-            </Card>
-          </TabsContent>
+         
         </Tabs>
       </section>
     </div>

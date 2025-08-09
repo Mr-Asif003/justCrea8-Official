@@ -97,10 +97,13 @@ export default function Help() {
               <p className="text-sm text-muted-foreground mb-4">
                 Comprehensive guides and tutorials
               </p>
+              <a href="https://drive.google.com/drive/folders/1vjplccVNRFOObnvN8GFJCyhnys-l4HqD?usp=sharing">
+
               <Button variant="outline" size="sm" className="gap-2">
                 <FileText className="h-4 w-4" />
                 View Docs
               </Button>
+              </a>
             </CardContent>
           </Card>
           
@@ -113,10 +116,13 @@ export default function Help() {
               <p className="text-sm text-muted-foreground mb-4">
                 Watch step-by-step video guides
               </p>
+               <a href="https://drive.google.com/drive/folders/1vjplccVNRFOObnvN8GFJCyhnys-l4HqD?usp=sharing">
+               
               <Button variant="outline" size="sm" className="gap-2">
                 <Youtube className="h-4 w-4" />
                 Watch Videos
               </Button>
+               </a>
             </CardContent>
           </Card>
           
@@ -129,10 +135,13 @@ export default function Help() {
               <p className="text-sm text-muted-foreground mb-4">
                 Join discussions with other users
               </p>
+               <a href="https://drive.google.com/drive/folders/1vjplccVNRFOObnvN8GFJCyhnys-l4HqD?usp=sharing">
+               
               <Button variant="outline" size="sm" className="gap-2">
                 <MessageSquare className="h-4 w-4" />
                 Visit Forum
               </Button>
+               </a>
             </CardContent>
           </Card>
         </div>
@@ -251,6 +260,8 @@ export default function Help() {
               <CardDescription>
                 Get help from our support team
               </CardDescription>
+               <p className="text-sm">After some time feedback might not work so submit your feedback and response to this whatsapp community</p>
+                  <a className='text-blue-600' href="https://chat.whatsapp.com/J1vPlBm97VeIvDxOppFV2i?mode=ac_t">Whatsapp Community</a>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -301,6 +312,7 @@ export default function Help() {
               <p className="text-sm text-muted-foreground">
                 We typically respond within 24 hours
               </p>
+              
               <Button onClick={handleSupportSubmit} className="gap-2">
                 <Send className="h-4 w-4" />
                 Submit Request
@@ -320,6 +332,9 @@ export default function Help() {
             <CardContent>
               <div className="space-y-6">
                 <div className="space-y-4">
+                  <p className="text-sm">After some time feedback might not work so submit your feedback and response to this whatsapp community</p>
+                  <a className='text-blue-600' href="https://chat.whatsapp.com/J1vPlBm97VeIvDxOppFV2i?mode=ac_t">Whatsapp Community</a>
+
                   <p className="text-sm font-medium mb-2">
                     How would you rate your experience with JustCre8?
                   </p>

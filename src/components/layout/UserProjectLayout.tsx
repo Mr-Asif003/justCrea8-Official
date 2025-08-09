@@ -9,7 +9,7 @@ const userName= user?.displayName || user?.email || 'User';
   const navLinkStyle = ({ isActive }) =>
     isActive
       ? 'text-sm md:text-lg text-cyan-500 font-serif bg-gray-800 p-0.1 pl-2 pr-2 rounded'
-      : 'text-gray-100 text-sm md:text-sm hover:text-cyan-500 hover:text-lg  font-serif';
+      : 'text-orange-400 text-sm md:text-sm hover:text-cyan-500 hover:text-lg  font-serif';
 
   return (
     <div>
@@ -21,9 +21,9 @@ const userName= user?.displayName || user?.email || 'User';
           <NavLink to={`/project/${userName}/teams`} className={navLinkStyle} aria-label="Projects">
             Teams
           </NavLink>
-          <NavLink to={`/project/${userName}/setting`} className={navLinkStyle} aria-label="Settings">
+          {/* <NavLink to={`/project/${userName}/setting`} className={navLinkStyle} aria-label="Settings">
             Settings
-          </NavLink>
+          </NavLink> */}
         </header>
       </div>
 

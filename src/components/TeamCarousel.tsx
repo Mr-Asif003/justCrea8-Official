@@ -22,7 +22,7 @@ const teamMembers = [
     social: {
       github: "https://github.com/Mr-Asif003",
       linkedin: "https://www.linkedin.com/in/asif-khan003",
-      insta: "#"
+      insta: "https://www.instagram.com/_.mr_asif_"
     },
     achievements: ["Top Performer 2023", "Team Leadership Award"]
   },

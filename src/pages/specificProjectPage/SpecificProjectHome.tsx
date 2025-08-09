@@ -193,7 +193,7 @@ export default function ProjectHome() {
       onValueChange={setSubTab}
       className="flex flex-col md:flex-row-reverse gap-4 w-full"
     >
-      <TabsList className="w-full md:w-[12%] flex flex-row md:flex-col justify-around items-center overflow-x-auto md:overflow-visible bg-muted p-2 rounded-xl shadow-md gap-2">
+      <TabsList className="w-full md:w-[12%]  flex flex-row md:flex-col justify-around items-center overflow-x-auto md:overflow-visible bg-muted p-2 rounded-xl shadow-md gap-2">
         {subTabs[group].map((tab) => (
           <TabsTrigger
             key={tab.value}
@@ -226,10 +226,10 @@ export default function ProjectHome() {
         }}
         className="w-full"
       >
-        <TabsList className="flex justify-around items-center bg-muted/30 rounded-xl mb-4 shadow-sm">
+        <TabsList className="max-w-5 flex justify-around items-center bg-muted/30 rounded-xl shadow-sm flex-wrap md:flex-nowrap md:mb-4 mb-32 ">
           <TabsTrigger
             value="overview"
-            className="text-sm md:text-base font-medium px-4 py-2 rounded-lg hover:bg-accent flex items-center gap-2"
+            className="text-sm md:text-base font-medium  py-2 rounded-lg hover:bg-accent flex items-center gap-2"
           >
             🧩 Overview
           </TabsTrigger>

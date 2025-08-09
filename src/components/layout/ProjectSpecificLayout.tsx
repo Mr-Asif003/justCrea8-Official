@@ -32,8 +32,8 @@ export default function ProjectSpecificLayout() {
       <header>
         <section className={`flex  flex-col gap-1 ${theme === 'dark' ? 'text-white' : 'text-black'}`}>
           <div className={`w-full backdrop-blur-xl bg-white/10 border border-white/30 shadow-2xl p-4 rounded ${theme === 'dark' ? 'bg-gradient-to-r from-black to-gray-800' : ''}`}>
-            <h1 className="text-pink-800 text-sm sm:text-lg font-bold">{projectname}</h1>
-            <p className="text-sm">Welcome Mr. Admin</p>
+            <h1 className="text-cyan-500 text-sm sm:text-lg font-bold">JustCrea8 Project Lab</h1>
+            <p className="text-sm">Thrill ! To Welcome you all</p>
           </div>
 
           {/* Navigation Bar */}

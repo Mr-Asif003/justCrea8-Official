@@ -3,6 +3,7 @@ import { PageTitle } from "@/components/ui/PageTitle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TeamHeader } from "@/components/team/TeamHeader";
 import { 
   FileEdit,
   StickyNote,
@@ -62,11 +63,31 @@ export default function UserHome() {
   const randomQuote = motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)];
 
   return (
-    <div className="animate-fade-in">
-      <PageTitle 
-        title={`${greeting}, ${firstName} ${lastName}`} 
-        description="Here's an overview of your creative workspace."
-      />
+    <div className="animate-fade-in ">
+      
+     <div className="relative p-[3px] w-full flex justify-center mb-10 rounded-md overflow-hidden group">
+  {/* Outer animated border */}
+  <div className="absolute inset-0 rounded-md border border-transparent 
+                  bg-gradient-to-r from-cyan-400 via-pink-500 to-purple-500 
+                  animate-borderMove opacity-80 blur-[2px]"></div>
+
+  {/* Inner static border for definition */}
+  <div className="absolute inset-[2px] rounded-md border border-cyan-300/50"></div>
+
+  {/* Glow pulse layer */}
+  <div className="absolute inset-0 rounded-md bg-gradient-to-r from-cyan-500/20 via-pink-500/20 to-purple-500/20 
+                  animate-glow opacity-0 group-hover:opacity-100 pointer-events-none"></div>
+
+  {/* Inner content */}
+  <div className="relative z-10 p-6 w-full bg-gray-900 rounded-md shadow-lg 
+                  shadow-purple-800/40 transition-transform duration-300 group-hover:scale-[1.02]">
+    <PageTitle
+      title={`${greeting}, ${firstName} ${lastName}`}
+      description="Here's an overview of your creative workspace."
+    />
+  </div>
+</div>
+
 
       {/* Quick access cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -101,15 +122,18 @@ export default function UserHome() {
         <Card className="col-span-1 md:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <span>Overview</span>
+              <span>Projects</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <StatsCard title="Blog Posts" value="12" />
-              <StatsCard title="Notes" value="34" />
-              <StatsCard title="Active Tasks" value="7" />
-              <StatsCard title="Completed" value="28" />
+            <div className="">
+        <QuickAccessCard
+        
+          title="Project Management"
+          icon={<LayoutDashboard className="h-6 w-6" />}
+          href="/project"
+          color="bg-gradient-to-br from-orange-500 to-orange-800"
+        />
             </div>
           </CardContent>
         </Card>
@@ -137,88 +161,7 @@ export default function UserHome() {
       </div>
 
       {/* Recent activity */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Clock className="h-5 w-5 text-primary" />
-            <span>Recent Activity</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="all">
-            <TabsList className="mb-4">
-              <TabsTrigger value="all">All</TabsTrigger>
-              <TabsTrigger value="blogs">Blogs</TabsTrigger>
-              <TabsTrigger value="notes">Notes</TabsTrigger>
-              <TabsTrigger value="todos">Todos</TabsTrigger>
-            </TabsList>
-            <TabsContent value="all">
-              <div className="space-y-4">
-                <ActivityItem 
-                  title="Blog post draft saved" 
-                  description="Tips for improving productivity"
-                  time="2 hours ago"
-                  type="blog"
-                />
-                <ActivityItem 
-                  title="Note created" 
-                  description="Meeting notes with design team"
-                  time="Yesterday"
-                  type="note"
-                />
-                <ActivityItem 
-                  title="Task completed" 
-                  description="Finish project proposal"
-                  time="Yesterday"
-                  type="task"
-                />
-                <ActivityItem 
-                  title="Blog published" 
-                  description="How to use JustCre8 effectively"
-                  time="3 days ago"
-                  type="blog"
-                />
-              </div>
-            </TabsContent>
-            <TabsContent value="blogs">
-              <div className="space-y-4">
-                <ActivityItem 
-                  title="Blog post draft saved" 
-                  description="Tips for improving productivity"
-                  time="2 hours ago"
-                  type="blog"
-                />
-                <ActivityItem 
-                  title="Blog published" 
-                  description="How to use JustCre8 effectively"
-                  time="3 days ago"
-                  type="blog"
-                />
-              </div>
-            </TabsContent>
-            <TabsContent value="notes">
-              <div className="space-y-4">
-                <ActivityItem 
-                  title="Note created" 
-                  description="Meeting notes with design team"
-                  time="Yesterday"
-                  type="note"
-                />
-              </div>
-            </TabsContent>
-            <TabsContent value="todos">
-              <div className="space-y-4">
-                <ActivityItem 
-                  title="Task completed" 
-                  description="Finish project proposal"
-                  time="Yesterday"
-                  type="task"
-                />
-              </div>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+  
     </div>
   );
 }
